@@ -1,5 +1,8 @@
 # Master Zhang — Property Care Platform (张师傅)
 
+[![Live Site](https://img.shields.io/badge/Live-masterzhang--platform.pages.dev-c97b3d)](https://masterzhang-platform.pages.dev)
+![Deploy](https://img.shields.io/badge/Deploys-Cloudflare%20Pages%20%40%20main-F6821F?logo=cloudflare&logoColor=white)
+
 Production-grade multi-service platform for **Markham & York Region (GTA, Ontario)**:
 Residential/Office Moving · Turnover Deep Cleaning · Junk & Estate Clear-outs ·
 Seasonal Yard Care · Commercial & Residential Snow Clearing.
@@ -23,6 +26,11 @@ npm run build      # static build → ./dist
 npm run preview    # wrangler pages dev ./dist (tests /api/quote with real bindings)
 npm run deploy     # build + wrangler pages deploy
 ```
+
+> **CI/CD:** Cloudflare Pages is connected to this repo — every push to `main`
+> auto-deploys to production ([live site](https://masterzhang-platform.pages.dev)),
+> and every pull request gets its own preview URL. The CLI `deploy`/`preview`
+> commands remain available for manual testing.
 
 ## Secrets (never commit)
 
