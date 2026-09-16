@@ -1,0 +1,230 @@
+export type Locale = 'en' | 'zh';
+
+export const LOCALES: { code: Locale; label: string; htmlLang: string }[] = [
+  { code: 'en', label: 'EN', htmlLang: 'en-CA' },
+  { code: 'zh', label: '中文', htmlLang: 'zh-CN' },
+];
+
+export const SITE = {
+  name: 'Master Zhang Property Care',
+  nameZh: '张师傅 · 搬运清洁物业维护',
+  phone: '+1 (905) 555-0148',
+  phoneHref: '+19055550148',
+  email: 'hello@masterzhang.ca',
+  rfpEmail: 'rfp@masterzhang.ca',
+  address: {
+    street: '18 Commerce Valley Dr E, Unit 210',
+    city: 'Markham',
+    region: 'ON',
+    postal: 'L3T 7X3',
+    country: 'CA',
+  },
+  hours: 'Mon–Sat 07:00–21:00 · Sun 08:00–18:00',
+} as const;
+
+/** Prefix a path with the locale segment (EN is served from root). */
+export function localePath(path: string, locale: Locale): string {
+  if (locale === 'en') return path;
+  const clean = path === '/' ? '' : path;
+  return `/zh${clean}`;
+}
+
+export const en = {
+  nav: {
+    services: 'Services',
+    areas: 'Service Areas',
+    reviews: 'Reviews',
+    estimate: 'Instant Estimate',
+    commercial: 'Commercial RFP',
+    phone: 'Call dispatch',
+  },
+  hero: {
+    eyebrow: 'Licensed · Insured · Markham & York Region',
+    titleA: 'One crew for the move,',
+    titleB: 'the mess, and the seasons.',
+    sub: 'Residential moving, turnover deep-cleaning, junk removal, yard care and commercial snow clearing — dispatched from Markham, delivered on time, every time.',
+    ctaPrimary: 'Instant Residential Estimate',
+    ctaSecondary: 'Commercial RFP / Vendor Account',
+    stats: [
+      { v: '2,400+', l: 'Jobs completed' },
+      { v: '100%', l: 'On-time completion' },
+      { v: '< 90 min', l: 'Emergency dispatch' },
+    ],
+  },
+  badges: {
+    cgl: '$5M Commercial General Liability',
+    cvor: 'CVOR Certified Fleet',
+    wsib: 'WSIB Cleared Crews',
+    ontime: '100% On-Time Guarantee',
+  },
+  services: {
+    eyebrow: 'Five verticals. One accountable crew.',
+    title: 'Full-cycle property care',
+    sub: 'From the day you get keys to the day you hand them over — and every season in between.',
+    items: [
+      {
+        id: 'moving',
+        title: 'Residential & Office Moving',
+        desc: 'Padded box-truck moves with blanket-wrap, disassembly and placement. Condos, detached homes, and office relocations.',
+        price: 'From $395',
+      },
+      {
+        id: 'cleaning',
+        title: 'Turnover Deep Cleaning',
+        desc: 'Move-in / move-out deep cleans that pass landlord and board inspections — appliances, fixtures, grout, and interiors.',
+        price: 'From $260',
+      },
+      {
+        id: 'junk',
+        title: 'Junk & Estate Clear-outs',
+        desc: 'Pickup + dump trailer teams for basements, estates, and renovation debris. Sweep-clean when we leave.',
+        price: 'From $275',
+      },
+      {
+        id: 'yard',
+        title: 'Seasonal Yard Care',
+        desc: 'Spring open-ups, fall leaf evacuation, hedge and bed care. Subscription plans available.',
+        price: 'From $250',
+      },
+      {
+        id: 'snow',
+        title: 'Snow Clearing & Salting',
+        desc: '24-hour trigger service for driveways, walkways, and commercial lots. Salting & ice management included.',
+        price: 'From $480/season',
+      },
+    ],
+  },
+  estimator: {
+    eyebrow: '60-second ballpark',
+    title: 'Instant Estimator',
+    sub: 'Three steps. No email walls — the price range appears before we ask for contact details.',
+    stepOf: 'Step {n} of 3',
+    chooseService: 'What do you need?',
+    chooseVolume: 'Scale of the job',
+    contact: 'Where do we send the firm quote?',
+    services: {
+      moving: 'Moving',
+      cleaning: 'Deep Clean',
+      junk: 'Junk Removal',
+      snow: 'Snow / Yard',
+    },
+    movingOptions: [
+      { id: '1', label: '1 bedroom / studio' },
+      { id: '2', label: '2 bedrooms' },
+      { id: '3', label: '3 bedrooms' },
+      { id: '4', label: '4+ bedrooms / office' },
+    ],
+    cleaningOptions: [
+      { id: '1', label: '1 bedroom / studio' },
+      { id: '2', label: '2 bedrooms' },
+      { id: '3', label: '3 bedrooms' },
+      { id: '4', label: '4+ bedrooms / commercial' },
+    ],
+    junkOptions: [
+      { id: '0.25', label: '¼ dump trailer load' },
+      { id: '0.5', label: '½ dump trailer load' },
+      { id: '1', label: 'Full trailer load' },
+      { id: '2', label: '2+ loads / estate' },
+    ],
+    snowOptions: [
+      { id: 'small', label: 'Small driveway (1–2 cars)' },
+      { id: 'medium', label: 'Double driveway + walkway' },
+      { id: 'large', label: 'Large lot / T-intersection' },
+      { id: 'commercial', label: 'Commercial plaza / condo' },
+    ],
+    volumeLabel: 'Select size',
+    postalLabel: 'Postal code',
+    postalHint: 'York Region FSAs: L3P, L3R, L4B, L6A…',
+    nameLabel: 'Full name',
+    emailLabel: 'Email',
+    phoneLabel: 'Phone',
+    notesLabel: 'Anything we should know? (optional)',
+    next: 'Continue',
+    back: 'Back',
+    submit: 'Request firm quote',
+    submitting: 'Sending…',
+    rangeLabel: 'Typical range for this job',
+    firmQuote: 'A dispatcher confirms your firm, fixed price within 2 business hours.',
+    successTitle: 'Request received.',
+    successBody: 'Your quote request is with our dispatch team. Expect a call or email within 2 business hours.',
+    another: 'Start another estimate',
+    disclaimer: 'Ballpark only — final pricing confirmed on-site or by video walk-through.',
+    errors: {
+      required: 'This field is required',
+      email: 'Enter a valid email address',
+      phone: 'Enter a valid phone number',
+      postal: 'Use format L6A 1A1',
+      outside: 'Outside York Region — we may still serve you; submit and we will confirm.',
+    },
+    selectService: 'Select a service to continue',
+    selectVolume: 'Select a size to continue',
+  },
+  gallery: {
+    eyebrow: 'Proof of work',
+    title: 'Before / After',
+    sub: 'Drag the handle — real transformations from our routes across Markham and York Region.',
+    cases: [
+      { title: 'Estate clear-out, Unionville', before: 'Before — 2 trailer loads', after: 'After — sweep clean' },
+      { title: 'Post-construction clean, Markham', before: 'Before — drywall dust', after: 'After — handover ready' },
+      { title: 'Commercial lot, Vaughan', before: 'Before — 14 cm snowfall', after: 'After — 5:30 AM, salted' },
+    ],
+  },
+  reviews: {
+    eyebrow: '4.9 / 5 across 300+ reviews',
+    title: 'Neighbours & property managers',
+    items: [
+      {
+        quote: 'Crew arrived at 8:00 sharp, wrapped everything, and the turnover clean passed inspection on the first visit. They are on our vendor list permanently.',
+        name: 'D. Whitfield',
+        role: 'Property Manager, Thornhill',
+      },
+      {
+        quote: 'Basement clear-out gone by lunch — two trailer loads, no damage to the walls, and they swept the garage too. Fair price, zero drama.',
+        name: 'M. Chen',
+        role: 'Homeowner, Markham',
+      },
+      {
+        quote: 'We used them for an office relocation over a weekend. Monday morning, 40 desks were live. That is all you need to know.',
+        name: 'S. Okafor',
+        role: 'Operations Lead, Vaughan',
+      },
+    ],
+  },
+  dualCta: {
+    residentialTitle: 'Homeowners',
+    residentialBody: 'Fixed-price moving, cleaning and seasonal plans. Get a ballpark in 60 seconds, a firm quote within 2 business hours.',
+    residentialCta: 'Instant Residential Estimate',
+    commercialTitle: 'Property managers & businesses',
+    commercialBody: 'Vendor accounts with COI on file, WSIB clearance, priority storm response and consolidated monthly invoicing for your portfolio.',
+    commercialCta: 'Start a Commercial RFP',
+    commercialNote: 'Portfolio snow & grounds contracts welcome.',
+  },
+  areas: {
+    eyebrow: 'Dispatch hub: Markham',
+    title: 'Service areas across York Region',
+    sub: 'Primary coverage with sub-90-minute emergency response. We also serve bordering neighbourhoods in North York and Scarborough.',
+    stats: { drive: 'min avg. dispatch', jobs: 'jobs completed', fsa: 'postal FSAs covered' },
+    viewPage: 'View city page',
+  },
+  footer: {
+    tagline: 'Moving, cleaning & property maintenance for Markham and York Region. 用专业服务，让生活更轻松。',
+    servicesTitle: 'Services',
+    areasTitle: 'Service Areas',
+    contactTitle: 'Dispatch',
+    hoursLabel: 'Hours',
+    rights: 'All rights reserved.',
+    licensed: 'Fully licensed & insured · CVOR #00000000',
+  },
+} as const;
+
+export type Dict = typeof en;
+
+import { zh } from './dict.zh';
+
+export const dict: Record<Locale, Dict> = { en, zh };
+
+/** Look up a dictionary for a locale, falling back to English. */
+export function getDict(locale: string | undefined): Dict {
+  return locale === 'zh' ? zh : en;
+}
+

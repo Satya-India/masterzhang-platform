@@ -1,0 +1,56 @@
+---
+import type { Locale } from '@/lib/i18n';
+import { getDict } from '@/lib/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = getDict(locale).reviews;
+---
+
+<section id="reviews" class="relative border-b border-ink-800/60 py-24" aria-labelledby="reviews-heading">
+  <div class="copper-radial absolute inset-x-0 top-0 h-64 opacity-40" aria-hidden="true"></div>
+  <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div class="max-w-xl">
+        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-copper-400">{t.eyebrow}</p>
+        <h2 id="reviews-heading" class="font-expanded mt-4 text-3xl font-bold text-ink-100 sm:text-5xl">
+          {t.title}
+        </h2>
+      </div>
+      <!-- Star rating -->
+      <div class="flex items-center gap-1 text-amber-glow" role="img" aria-label="4.9 out of 5 stars">
+        {Array.from({ length: 5 }).map(() => (
+          <svg viewBox="0 0 24 24" class="size-5 fill-current" aria-hidden="true">
+            <path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 16.9 5.9 20.4l1.5-6.8L2.2 9l6.9-.7z" />
+          </svg>
+        ))}
+      </div>
+    </div>
+
+    <div class="mt-14 grid gap-5 lg:grid-cols-3">
+      {
+        t.items.map((r, i) => (
+          <blockquote class="edge-glow edge-glow-hover relative rounded-2xl border border-ink-700/60 bg-ink-900 p-7">
+            <span class="font-expanded absolute -top-3 left-6 bg-ink-900 px-2 text-5xl font-black text-copper-500/40" aria-hidden="true">
+              &ldquo;
+            </span>
+            <p class="text-[15px] leading-relaxed text-ink-200">{r.quote}</p>
+            <footer class="mt-6 flex items-center gap-3 border-t border-ink-700/60 pt-5">
+              <span class="grid size-10 place-items-center rounded-full bg-copper-500/15 font-bold text-copper-300" aria-hidden="true">
+                {r.name.charAt(0)}
+              </span>
+              <div>
+                <cite class="block text-sm font-semibold not-italic text-ink-100">{r.name}</cite>
+                <span class="block text-xs text-ink-400">{r.role}</span>
+              </div>
+              <span class="ml-auto text-xs text-ink-500" aria-hidden="true">{`0${i + 1}`}</span>
+            </footer>
+          </blockquote>
+        ))
+      }
+    </div>
+  </div>
+</section>

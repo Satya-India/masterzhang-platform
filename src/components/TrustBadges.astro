@@ -1,0 +1,24 @@
+---
+interface Props {
+  locale?: 'en' | 'zh';
+}
+const { locale = 'en' } = Astro.props;
+const isZh = locale === 'zh';
+
+const badges = isZh
+  ? ['$500万商业综合责任险', 'CVOR 认证车队', 'WSIB 合规', '100% 准时保证']
+  : ['$5M Commercial General Liability', 'CVOR Certified Fleet', 'WSIB Cleared Crews', '100% On-Time Guarantee'];
+---
+
+<ul class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-300" role="list">
+  {
+    badges.map((b) => (
+      <li class="flex items-center gap-2">
+        <svg viewBox="0 0 24 24" class="size-4 text-copper-400" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+          <path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span class="font-medium">{b}</span>
+      </li>
+    ))
+  }
+</ul>

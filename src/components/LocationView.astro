@@ -1,0 +1,139 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import TrustBadges from '@/components/TrustBadges.astro';
+import InstantEstimator from '@/components/InstantEstimator.astro';
+import DualFunnelCTA from '@/components/DualFunnelCTA.astro';
+import { SITE, getDict, type Locale } from '@/lib/i18n';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  entry: CollectionEntry<'locations'>;
+  locale: Locale;
+}
+
+const { entry, locale } = Astro.props;
+const d = entry.data;
+const t = getDict(locale);
+const isZh = locale === 'zh';
+const path = isZh ? `/zh/locations/${entry.id}/` : `/locations/${entry.id}/`;
+
+const cityName = isZh ? d.nameZh : d.name;
+const intro = isZh ? d.introZh : d.intro;
+const highlights = isZh ? d.highlightsZh : d.highlights;
+const featured = t.services.items.find((s) => s.id === d.featuredService);
+
+/* Per-city LocalBusiness node for hyper-local SERP eligibility */
+const citySchema = {
+  '@type': 'MovingCompany',
+  name: `${SITE.name} — ${cityName}`,
+  url: new URL(path, Astro.site).href,
+  telephone: SITE.phoneHref,
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: d.name,
+    addressRegion: d.region === 'York Region' ? 'ON' : d.region,
+    addressCountry: 'CA',
+  },
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: d.geo.lat,
+    longitude: d.geo.lng,
+  },
+  areaServed: d.fsaCodes.map((f) => ({
+    '@type': 'PostalCodeSpecification',
+    postalCode: f,
+    addressCountry: 'CA',
+  })),
+};
+---
+
+<BaseLayout
+  title={isZh ? `${cityName}搬运、清洁、垃圾清运与铲雪服务` : `Moving, Cleaning, Junk Removal & Snow Clearing in ${d.name}`}
+  description={intro.slice(0, 155)}
+  {path}
+  {locale}
+  extraSchema={[citySchema]}
+>
+  <section class="grain relative overflow-hidden border-b border-ink-800 pt-16">
+    <div class="blueprint absolute inset-0" aria-hidden="true"></div>
+    <div class="copper-radial absolute inset-0" aria-hidden="true"></div>
+    <div class="relative mx-auto max-w-5xl px-4 pb-16 pt-16 sm:px-6">
+      <nav class="text-xs text-ink-400" aria-label="Breadcrumb">
+        <a href={isZh ? '/zh' : '/'} class="hover:text-copper-300">{isZh ? '首页' : 'Home'}</a>
+        <span class="mx-2" aria-hidden="true">/</span>
+        <a href={(isZh ? '/zh' : '') + '/#areas'} class="hover:text-copper-300">{t.nav.areas}</a>
+        <span class="mx-2" aria-hidden="true">/</span>
+        <span class="text-ink-200">{cityName}</span>
+      </nav>
+
+      <p class="mt-8 text-xs font-semibold uppercase tracking-[0.25em] text-copper-400">
+        {d.region}, Ontario
+      </p>
+      <h1 class="font-expanded mt-4 text-4xl font-black leading-tight text-ink-100 sm:text-6xl">
+        {isZh ? `${cityName} — ` : ''}{featured?.title}{isZh ? '' : ` in ${d.name}`}
+      </h1>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-ink-300">{intro}</p>
+
+      <div class="mt-8 flex flex-wrap items-center gap-4">
+        <a href="#estimator" class="rounded-xl bg-copper-500 px-6 py-3.5 font-bold text-ink-950 transition-colors hover:bg-copper-400">
+          {t.nav.estimate}
+        </a>
+        <a href={`tel:${SITE.phoneHref}`} class="rounded-xl border border-copper-500/50 px-6 py-3.5 font-semibold text-copper-300 transition-colors hover:bg-copper-500/10">
+          {SITE.phone}
+        </a>
+      </div>
+
+      <div class="mt-10"><TrustBadges {locale} /></div>
+    </div>
+  </section>
+
+  <section class="border-b border-ink-800/60 py-16">
+    <div class="mx-auto grid max-w-5xl gap-10 px-4 sm:px-6 lg:grid-cols-3">
+      <div class="lg:col-span-2">
+        <h2 class="font-expanded text-2xl font-bold text-ink-100">
+          {isZh ? `${cityName}服务亮点` : `Neighbourhood coverage in ${d.name}`}
+        </h2>
+        <ul class="mt-6 space-y-3">
+          {
+            highlights.map((h) => (
+              <li class="flex items-start gap-3 text-ink-300">
+                <svg viewBox="0 0 24 24" class="mt-1 size-4 shrink-0 text-copper-400" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+                  <path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span>{h}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <aside class="edge-glow h-fit rounded-2xl border border-ink-700/60 bg-ink-900 p-6">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-ink-400">
+          {isZh ? '区域数据' : 'Area snapshot'}
+        </h3>
+        <dl class="mt-4 space-y-4 text-sm">
+          <div>
+            <dt class="text-ink-500">{t.areas.stats.drive}</dt>
+            <dd class="font-expanded text-2xl font-bold text-copper-300">{d.driveTimeMin}</dd>
+          </div>
+          <div>
+            <dt class="text-ink-500">{t.areas.stats.jobs}</dt>
+            <dd class="font-expanded text-2xl font-bold text-copper-300">{d.jobsCompleted.toLocaleString()}</dd>
+          </div>
+          <div>
+            <dt class="text-ink-500">{isZh ? '覆盖邮编前缀' : 'Postal FSAs'}</dt>
+            <dd class="mt-1 flex flex-wrap gap-1.5">
+              {
+                d.fsaCodes.map((f) => (
+                  <span class="rounded bg-ink-800 px-2 py-0.5 text-xs font-semibold text-ink-200">{f}</span>
+                ))
+              }
+            </dd>
+          </div>
+        </dl>
+      </aside>
+    </div>
+  </section>
+
+  <InstantEstimator {locale} />
+  <DualFunnelCTA {locale} />
+</BaseLayout>

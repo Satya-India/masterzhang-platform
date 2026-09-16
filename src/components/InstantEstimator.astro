@@ -1,0 +1,390 @@
+---
+import type { Locale } from '@/lib/i18n';
+import { getDict } from '@/lib/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = getDict(locale).estimator;
+
+/** Server-side ballpark math — single source of truth, mirrored by the API. */
+const RANGES: Record<string, Record<string, [number, number]>> = {
+  moving: { '1': [395, 480], '2': [560, 680], '3': [720, 880], '4': [880, 1150] },
+  cleaning: { '1': [260, 320], '2': [345, 420], '3': [430, 530], '4': [530, 700] },
+  junk: { '0.25': [255, 310], '0.5': [430, 520], '1': [880, 1050], '2': [1750, 2100] },
+  snow: { small: [420, 560], medium: [560, 780], large: [780, 1020] },
+};
+
+const OPTION_SETS: Record<string, string[]> = {
+  moving: 'movingOptions',
+  cleaning: 'cleaningOptions',
+  junk: 'junkOptions',
+  snow: 'snowOptions',
+};
+
+const fmt = (n: number) => `$${Math.round(n).toLocaleString('en-CA')}`;
+
+const groups = Object.entries(OPTION_SETS).map(([service, key]) => ({
+  service,
+  options: (t as unknown as Record<string, { id: string; label: string }[]>)[key].map((o) => {
+    const range = RANGES[service]?.[o.id];
+    return { ...o, range: range ? `${fmt(range[0])} – ${fmt(range[1])}` : null };
+  }),
+}));
+
+const steps = [
+  { n: 1, label: t.chooseService },
+  { n: 2, label: t.chooseVolume },
+  { n: 3, label: t.contact },
+];
+---
+
+<section
+  id="estimator"
+  class="relative border-b border-ink-800/60 py-24"
+  aria-labelledby="estimator-heading"
+>
+  <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+    <div class="text-center">
+      <p class="text-xs font-semibold uppercase tracking-[0.25em] text-copper-400">{t.eyebrow}</p>
+      <h2 id="estimator-heading" class="font-expanded mt-4 text-3xl font-bold text-ink-100 sm:text-5xl">
+        {t.title}
+      </h2>
+      <p class="mx-auto mt-4 max-w-xl text-ink-300">{t.sub}</p>
+    </div>
+
+    <div
+      class="edge-glow mt-12 rounded-3xl border border-ink-700/60 bg-gradient-to-b from-ink-850 to-ink-900"
+      data-estimator
+      data-locale={locale}
+    >
+      <!-- Progress -->
+      <ol class="flex items-center gap-2 border-b border-ink-700/60 px-6 py-5 sm:px-9" aria-label="Progress">
+        {
+          steps.map((s) => (
+            <li class="flex flex-1 items-center gap-2.5" data-progress={s.n}>
+              <span
+                class="progress-dot grid size-7 shrink-0 place-items-center rounded-full border border-ink-600 text-xs font-bold text-ink-400 transition-all duration-300"
+                aria-hidden="true"
+              >
+                {s.n}
+              </span>
+              <span class="progress-label hidden text-xs font-medium text-ink-400 sm:block">{s.label}</span>
+              {s.n < 3 && <span class="progress-line mx-1 h-px flex-1 bg-ink-700" aria-hidden="true" />}
+            </li>
+          ))
+        }
+      </ol>
+
+      <div class="p-6 sm:p-9">
+        <!-- STEP 1: service -->
+        <fieldset data-step="1">
+          <legend class="text-sm font-semibold uppercase tracking-wider text-ink-300">{t.chooseService}</legend>
+          <div class="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {
+              (['moving', 'cleaning', 'junk', 'snow'] as const).map((id) => (
+                <button
+                  type="button"
+                  class="flex flex-col items-start gap-3 rounded-xl border border-ink-600/70 bg-ink-900 p-4 text-left transition-all hover:border-copper-500/70"
+                  data-select="service"
+                  data-value={id}
+                  aria-pressed="false"
+                >
+                  <span class="grid size-9 place-items-center rounded-lg bg-ink-950 text-copper-400">
+                    <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      {id === 'moving' && <path d="M3 7h11v9H3zM14 10h3.5l2.5 2.5V16h-6v-6z" />}
+                      {id === 'cleaning' && <path d="M12 3v6m0 0-5 5a3.5 3.5 0 0 0 5 5l5-5-5-5z" />}
+                      {id === 'junk' && <path d="M4 8h16l-1.5 11a2 2 0 0 1-2 1.8h-9A2 2 0 0 1 5.5 19L4 8zm4 0V6a4 4 0 0 1 8 0v2" />}
+                      {id === 'snow' && <path d="M12 2v20M4 6l16 12M20 6 4 18" />}
+                    </svg>
+                  </span>
+                  <span class="text-sm font-semibold text-ink-100">{t.services[id]}</span>
+                </button>
+              ))
+            }
+          </div>
+        </fieldset>
+
+        <!-- STEP 2: volume -->
+        <fieldset data-step="2" class="hidden">
+          <legend class="text-sm font-semibold uppercase tracking-wider text-ink-300">{t.chooseVolume}</legend>
+          {
+            groups.map((g) => (
+              <div class="volume-group mt-5 grid gap-3 sm:grid-cols-2" data-group={g.service} hidden>
+                {g.options.map((o) => (
+                  <button
+                    type="button"
+                    class="flex items-center justify-between gap-3 rounded-xl border border-ink-600/70 bg-ink-900 px-4 py-3.5 text-left transition-all hover:border-copper-500/70"
+                    data-select="volume"
+                    data-value={o.id}
+                    aria-pressed="false"
+                  >
+                    <span class="text-sm font-medium text-ink-100">{o.label}</span>
+                    {o.range && (
+                      <span class="shrink-0 rounded-md bg-copper-500/10 px-2 py-1 text-xs font-bold text-copper-300">{o.range}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            ))
+          }
+        </fieldset>
+
+        <!-- STEP 3: contact -->
+        <form data-step="3" class="hidden" novalidate>
+          <p class="text-sm font-semibold uppercase tracking-wider text-ink-300">{t.contact}</p>
+          <div class="mt-5 grid gap-4 sm:grid-cols-2">
+            <label class="block sm:col-span-2">
+              <span class="mb-1.5 block text-xs font-medium text-ink-400">{t.postalLabel}</span>
+              <input type="text" name="postalCode" required autocomplete="postal-code" placeholder="L6A 1A1" maxlength="7" class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-ink-100 placeholder-ink-500 transition-colors focus:border-copper-500 focus:outline-none" />
+              <span class="mt-1 block text-xs text-ink-500">{t.postalHint}</span>
+            </label>
+            <label class="block">
+              <span class="mb-1.5 block text-xs font-medium text-ink-400">{t.nameLabel}</span>
+              <input type="text" name="name" required autocomplete="name" class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-ink-100 transition-colors focus:border-copper-500 focus:outline-none" />
+            </label>
+            <label class="block">
+              <span class="mb-1.5 block text-xs font-medium text-ink-400">{t.phoneLabel}</span>
+              <input type="tel" name="phone" required autocomplete="tel" class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-ink-100 transition-colors focus:border-copper-500 focus:outline-none" />
+            </label>
+            <label class="block sm:col-span-2">
+              <span class="mb-1.5 block text-xs font-medium text-ink-400">{t.emailLabel}</span>
+              <input type="email" name="email" required autocomplete="email" class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-ink-100 transition-colors focus:border-copper-500 focus:outline-none" />
+            </label>
+            <label class="block sm:col-span-2">
+              <span class="mb-1.5 block text-xs font-medium text-ink-400">{t.notesLabel}</span>
+              <textarea name="notes" rows="2" class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-ink-100 transition-colors focus:border-copper-500 focus:outline-none"></textarea>
+            </label>
+            <!-- Honeypot — invisible to humans, catnip for bots -->
+            <label class="absolute -left-[9999px]" aria-hidden="true">
+              <span>Company website</span>
+              <input type="text" name="companyWebsite" tabindex="-1" autocomplete="off" />
+            </label>
+          </div>
+        </form>
+
+        <!-- SUCCESS -->
+        <div data-step="success" class="hidden py-8 text-center">
+          <span class="mx-auto grid size-16 place-items-center rounded-full bg-copper-500/15 text-copper-400">
+            <svg viewBox="0 0 24 24" class="size-8" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+              <path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <h3 class="font-expanded mt-5 text-2xl font-bold text-ink-100">{t.successTitle}</h3>
+          <p class="mx-auto mt-3 max-w-md text-ink-300">{t.successBody}</p>
+          <button type="button" class="mt-6 rounded-full border border-ink-600 px-5 py-2.5 text-sm font-semibold text-ink-200 transition-colors hover:border-copper-500 hover:text-copper-300" data-restart>
+            {t.another}
+          </button>
+        </div>
+
+    </div>
+
+      <!-- Footer: live range + nav -->
+      <div class="flex flex-col gap-4 border-t border-ink-700/60 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-9">
+        <div data-price-banner class="text-sm text-ink-400" aria-live="polite">
+          <span class="block text-xs uppercase tracking-wider text-ink-500">{t.rangeLabel}</span>
+          <span class="price-value font-expanded text-xl font-bold text-copper-300">—</span>
+        </div>
+        <div class="flex items-center justify-end gap-3">
+          <button
+            type="button"
+            class="rounded-xl border border-ink-600 px-5 py-2.5 text-sm font-semibold text-ink-300 transition-colors hover:border-ink-500 disabled:opacity-40"
+            data-prev
+            disabled
+          >
+            ← {t.back}
+          </button>
+          <button
+            type="button"
+            class="rounded-xl bg-copper-500 px-6 py-2.5 text-sm font-bold text-ink-950 transition-colors hover:bg-copper-400 disabled:opacity-40"
+            data-next
+            disabled
+          >
+            {t.next}
+          </button>
+          <button
+            type="button"
+            class="hidden rounded-xl bg-copper-500 px-6 py-2.5 text-sm font-bold text-ink-950 transition-colors hover:bg-copper-400 disabled:opacity-50"
+            data-submit
+          >
+            {t.submit}
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /data-estimator card -->
+
+
+    <p class="mt-4 text-center text-xs text-ink-500">{t.disclaimer}</p>
+  </div>
+</section>
+
+<script>
+  /* Instant Estimator island — vanilla TS, zero framework payload */
+  const root = document.querySelector<HTMLElement>('[data-estimator]');
+  if (root) {
+    const i18nEl = document.getElementById('estimator-i18n');
+    const i18n = i18nEl ? (JSON.parse(i18nEl.textContent ?? '{}') as { t: any }) : { t: null };
+    const t = i18n.t;
+
+    const state = { service: '', volume: '', step: 1 as 1 | 2 | 3 };
+    const panels = {
+      s1: root.querySelector<HTMLElement>('[data-step="1"]')!,
+      s2: root.querySelector<HTMLElement>('[data-step="2"]')!,
+      s3: root.querySelector<HTMLFormElement>('[data-step="3"]')!,
+      success: root.querySelector<HTMLElement>('[data-step="success"]')!,
+    };
+    const btnPrev = root.querySelector<HTMLButtonElement>('[data-prev]')!;
+    const btnNext = root.querySelector<HTMLButtonElement>('[data-next]')!;
+    const btnSubmit = root.querySelector<HTMLButtonElement>('[data-submit]')!;
+    const priceEl = root.querySelector<HTMLElement>('.price-value')!;
+    const banner = root.querySelector<HTMLElement>('[data-price-banner]')!;
+    const stepError = root.querySelector<HTMLElement>('.step-error')!;
+
+    function paintProgress() {
+      root.querySelectorAll<HTMLElement>('[data-progress]').forEach((li) => {
+        const n = Number(li.dataset.progress);
+        const dot = li.querySelector('.progress-dot') as HTMLElement;
+        dot.classList.toggle('bg-copper-500', n <= state.step);
+        dot.classList.toggle('text-ink-950', n <= state.step);
+        dot.classList.toggle('border-copper-500', n <= state.step);
+        li.querySelector('.progress-line')?.classList.toggle('bg-copper-600', n < state.step);
+      });
+    }
+
+    function showStep(n: 1 | 2 | 3 | 'success') {
+      Object.values(panels).forEach((p) => p.classList.add('hidden'));
+      if (n === 'success') {
+        panels.success.classList.remove('hidden');
+        banner.classList.add('opacity-40');
+      } else {
+        (n === 1 ? panels.s1 : n === 2 ? panels.s2 : panels.s3).classList.remove('hidden');
+        banner.classList.remove('opacity-40');
+      }
+      state.step = n === 'success' ? 3 : n;
+      paintProgress();
+      updateNav();
+    }
+
+    function updateNav() {
+      const onFinal = state.step === 3;
+      btnPrev.disabled = state.step === 1;
+      btnNext.classList.toggle('hidden', onFinal);
+      btnSubmit.classList.toggle('hidden', !onFinal);
+      const complete =
+        (state.step === 1 && state.service) || (state.step === 2 && state.volume) || state.step === 3;
+      btnNext.disabled = !complete;
+      btnSubmit.disabled = false;
+    }
+
+    function showErr(msg: string) {
+      stepError.textContent = msg;
+      stepError.classList.remove('hidden');
+    }
+
+    /* Selection buttons (service + volume) */
+    root.querySelectorAll<HTMLButtonElement>('[data-select]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const kind = btn.dataset.select as 'service' | 'volume';
+        const scope = btn.closest('fieldset, form') as HTMLElement;
+        scope.querySelectorAll<HTMLButtonElement>(`[data-select="${kind}"]`).forEach((b) => {
+          b.setAttribute('aria-pressed', 'false');
+          b.classList.remove('!border-copper-500', 'bg-copper-500/10');
+        });
+        btn.setAttribute('aria-pressed', 'true');
+        btn.classList.add('!border-copper-500', 'bg-copper-500/10');
+
+        if (kind === 'service') {
+          state.service = btn.dataset.value ?? '';
+          state.volume = '';
+          root.querySelectorAll<HTMLElement>('.volume-group').forEach((g) => {
+            g.hidden = g.dataset.group !== state.service;
+          });
+          priceEl.textContent = '—';
+        } else {
+          state.volume = btn.dataset.value ?? '';
+          const chip = btn.querySelector('span:last-child')?.textContent?.trim();
+          if (chip) priceEl.textContent = chip;
+        }
+        stepError.classList.add('hidden');
+        updateNav();
+      });
+    });
+
+    function validateStep3(): string | null {
+      const form = panels.s3;
+      const get = (n: string) => (form.elements.namedItem(n) as HTMLInputElement)?.value?.trim() ?? '';
+      if (get('postalCode').length < 6) return t.errors.postal;
+      if (!get('name')) return t.errors.required;
+      if (!/^[+()\-.\s\d]{7,20}$/.test(get('phone'))) return t.errors.phone;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(get('email'))) return t.errors.email;
+      return null;
+    }
+
+    btnNext.addEventListener('click', () => {
+      if (state.step === 1 && !state.service) return showErr(t.selectService);
+      if (state.step === 2 && !state.volume) return showErr(t.selectVolume);
+      showStep(state.step === 1 ? 2 : 3);
+    });
+
+    btnPrev.addEventListener('click', () => showStep(state.step === 3 ? 2 : 1));
+
+    /* Submit → /api/quote (Cloudflare edge function) */
+    btnSubmit.addEventListener('click', async () => {
+      const err = validateStep3();
+      if (err) return showErr(err);
+      const form = panels.s3;
+      const val = (n: string) => (form.elements.namedItem(n) as HTMLInputElement)?.value?.trim() ?? '';
+      const rangeMatch = priceEl.textContent?.match(/\$([\d,]+)\s*[–-]\s*\$([\d,]+)/);
+
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = t.submitting;
+      try {
+        const res = await fetch('/api/quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            service: state.service,
+            volume: state.volume,
+            postalCode: val('postalCode'),
+            name: val('name'),
+            email: val('email'),
+            phone: val('phone'),
+            notes: val('notes'),
+            companyWebsite: val('companyWebsite'),
+            locale: root.dataset.locale,
+            priceLow: rangeMatch ? Number(rangeMatch[1].replace(/,/g, '')) : null,
+            priceHigh: rangeMatch ? Number(rangeMatch[2].replace(/,/g, '')) : null,
+          }),
+        });
+        if (!res.ok) throw new Error('Request failed');
+        showStep('success');
+      } catch {
+        showErr(root.dataset.locale === 'zh' ? '提交失败，请致电我们。' : 'Submission failed — please call us instead.');
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = t.submit;
+      }
+    });
+
+    /* Restart */
+    root.querySelector('[data-restart]')?.addEventListener('click', () => {
+      state.service = '';
+      state.volume = '';
+      panels.s3.reset();
+      root.querySelectorAll('[data-select]').forEach((b) => {
+        (b as HTMLElement).setAttribute('aria-pressed', 'false');
+        b.classList.remove('!border-copper-500', 'bg-copper-500/10');
+      });
+      root.querySelectorAll<HTMLElement>('.volume-group').forEach((g) => (g.hidden = true));
+      priceEl.textContent = '—';
+      showStep(1);
+    });
+
+    showStep(1);
+
+  }
+</script>
+

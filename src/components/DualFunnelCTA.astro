@@ -1,0 +1,51 @@
+---
+import { SITE, type Locale, getDict } from '@/lib/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = getDict(locale).dualCta;
+const base = locale === 'zh' ? '/zh' : '';
+---
+
+<section class="py-24" aria-label="Get started">
+  <div class="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
+    <!-- Residential funnel -->
+    <div class="edge-glow edge-glow-hover grain relative overflow-hidden rounded-3xl border border-copper-500/30 bg-gradient-to-br from-copper-600/15 via-ink-900 to-ink-900 p-9">
+      <p class="text-xs font-semibold uppercase tracking-[0.25em] text-copper-300">{t.residentialTitle}</p>
+      <h2 class="font-expanded mt-4 text-2xl font-bold text-ink-100 sm:text-3xl">{t.residentialCta}</h2>
+      <p class="mt-4 max-w-md text-ink-300">{t.residentialBody}</p>
+      <a
+        href={`${base}/#estimator`}
+        class="mt-7 inline-flex items-center gap-2 rounded-xl bg-copper-500 px-6 py-3.5 font-bold text-ink-950 transition-colors hover:bg-copper-400"
+      >
+        {t.residentialCta}
+        <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+          <path d="M5 12h14m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </a>
+    </div>
+
+    <!-- Commercial funnel -->
+    <div class="edge-glow edge-glow-hover relative overflow-hidden rounded-3xl border border-ink-600/60 bg-ink-900 p-9">
+      <div class="blueprint absolute inset-0 opacity-40" aria-hidden="true"></div>
+      <div class="relative">
+        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-ink-400">{t.commercialTitle}</p>
+        <h2 class="font-expanded mt-4 text-2xl font-bold text-ink-100 sm:text-3xl">{t.commercialCta}</h2>
+        <p class="mt-4 max-w-md text-ink-300">{t.commercialBody}</p>
+        <a
+          href={`mailto:${SITE.rfpEmail}?subject=${encodeURIComponent('Commercial RFP / Vendor Account Request')}&body=${encodeURIComponent('Company:\nPortfolio size (doors/sqft):\nServices needed:\nTimeline:')}`}
+          class="mt-7 inline-flex items-center gap-2 rounded-xl border border-copper-500/60 px-6 py-3.5 font-semibold text-copper-300 transition-colors hover:bg-copper-500/10"
+        >
+          {t.commercialCta}
+          <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+            <path d="M5 12h14m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </a>
+        <p class="mt-4 text-xs text-ink-500">{t.commercialNote}</p>
+      </div>
+    </div>
+  </div>
+</section>

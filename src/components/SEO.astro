@@ -1,0 +1,165 @@
+---
+import { SITE, type Locale } from '@/lib/i18n';
+
+interface Props {
+  /** Page title (site suffix appended automatically) */
+  title: string;
+  description: string;
+  /** Canonical path, e.g. "/locations/markham" */
+  path: string;
+  locale: Locale;
+  /** OG image (1200×630) — absolute or site-relative */
+  ogImage?: string;
+  /** Extra JSON-LD graphs merged into the page (e.g. per-city LocalBusiness) */
+  extraSchema?: Record<string, unknown>[];
+  noindex?: boolean;
+}
+
+const { title, description, path, locale, ogImage, extraSchema = [], noindex = false } = Astro.props;
+
+const site = Astro.site ?? new URL('https://masterzhang.ca');
+const canonical = new URL(path, site).href;
+const ogImageAbs = new URL(ogImage ?? '/og-default.png', site).href;
+const htmlLang = locale === 'zh' ? 'zh-CN' : 'en-CA';
+const siteName = locale === 'zh' ? SITE.nameZh : SITE.name;
+
+const fullTitle = `${title} | ${siteName}`;
+
+/* Compliance signals exposed to search engines */
+const FSAS = [
+  'L3P', 'L3R', 'L3S', 'L3T', 'L3X',
+  'L4B', 'L4C', 'L4E', 'L4H', 'L4J', 'L4K', 'L4L', 'L4S',
+  'L6A', 'L6B', 'L6C', 'L6E', 'L6G',
+];
+const CITIES = ['Markham', 'Richmond Hill', 'Vaughan', 'Thornhill', 'Unionville'];
+
+const offerCatalog = {
+  '@type': 'OfferCatalog',
+  name: 'Property Care Services',
+  itemListElement: [
+    'Residential & Office Moving|395',
+    'Move-in / Move-out Deep Cleaning|260',
+    'Junk Removal & Estate Clear-outs|275',
+    'Seasonal Yard Care & Maintenance|250',
+    'Commercial & Residential Snow Clearing and Salting|480',
+  ].map((entry) => {
+    const [serviceType, price] = entry.split('|');
+    return {
+      '@type': 'Offer',
+      itemOffered: {
+        '@type': 'Service',
+        serviceType,
+        provider: { '@id': `${site.href}#business` },
+      },
+      priceSpecification: {
+        '@type': 'PriceSpecification',
+        price: Number(price),
+        priceCurrency: 'CAD',
+        minPrice: Number(price),
+        ...(serviceType.includes('Snow')
+          ? { description: 'Seasonal contract, per driveway' }
+          : {}),
+      },
+    };
+  }),
+};
+
+const mainSchema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': ['MovingCompany', 'HomeAndConstructionBusiness', 'LocalBusiness'],
+      '@id': `${site.href}#business`,
+      name: siteName,
+      alternateName: '张师傅',
+      url: site.href,
+      image: ogImageAbs,
+      logo: new URL('/favicon.svg', site).href,
+      telephone: SITE.phoneHref,
+      email: SITE.email,
+      priceRange: '$$',
+      currenciesAccepted: 'CAD',
+      paymentAccepted: 'Cash, Credit Card, E-Transfer, Invoice',
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: SITE.address.street,
+        addressLocality: SITE.address.city,
+        addressRegion: SITE.address.region,
+        postalCode: SITE.address.postal,
+        addressCountry: SITE.address.country,
+      },
+      geo: {
+        '@type': 'GeoCoordinates',
+        latitude: 43.8561,
+        longitude: -79.337,
+      },
+      openingHoursSpecification: [
+        {
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+          opens: '07:00',
+          closes: '21:00',
+        },
+        {
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: 'Sunday',
+          opens: '08:00',
+          closes: '18:00',
+        },
+      ],
+      areaServed: [
+        ...CITIES.map((c) => ({ '@type': 'City', name: c })),
+        ...FSAS.map((f) => ({
+          '@type': 'PostalCodeSpecification',
+          postalCode: f,
+          addressCountry: 'CA',
+        })),
+      ],
+      hasCredential: [
+        { '@type': 'Certification', name: 'CVOR — Commercial Vehicle Operator Registration (Ontario)' },
+        { '@type': 'Certification', name: 'WSIB Clearance Certificate' },
+        { '@type': 'Certification', name: '$5,000,000 Commercial General Liability Insurance' },
+      ],
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: '4.9',
+        reviewCount: '312',
+        bestRating: '5',
+      },
+      hasOfferCatalog: offerCatalog,
+    },
+    ...extraSchema,
+  ],
+};
+---
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+<!-- OpenGraph -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={siteName} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogImageAbs} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:locale" content={htmlLang.replace('-', '_')} />
+<meta property="og:locale:alternate" content={locale === 'zh' ? 'en_CA' : 'zh_CN'} />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImageAbs} />
+
+<!-- hreflang alternates -->
+<link rel="alternate" hreflang={htmlLang} href={canonical} />
+<link rel="alternate" hreflang={locale === 'zh' ? 'en-CA' : 'zh-CN'} href={locale === 'zh' ? new URL(path.replace('/zh', '') || '/', site).href : new URL(`/zh${path === '/' ? '' : path}`, site).href} />
+<link rel="alternate" hreflang="x-default" href={new URL(path.replace('/zh', '') || '/', site).href} />
+
+<!-- Structured data -->
+<script type="application/ld+json" set:html={JSON.stringify(mainSchema)} />

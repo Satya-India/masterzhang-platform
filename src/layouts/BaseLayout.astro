@@ -1,0 +1,55 @@
+---
+import '@/styles/global.css';
+import '@fontsource-variable/archivo';
+import '@fontsource-variable/instrument-sans';
+import SEO from '@/components/SEO.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import { LOCALES, type Locale } from '@/lib/i18n';
+
+interface Props {
+  title: string;
+  description: string;
+  path: string;
+  locale: Locale;
+  ogImage?: string;
+  extraSchema?: Record<string, unknown>[];
+  noindex?: boolean;
+}
+
+const { title, description, path, locale, ogImage, extraSchema, noindex } = Astro.props;
+const htmlLang = locale === 'zh' ? 'zh-CN' : 'en-CA';
+const other: Locale = locale === 'zh' ? 'en' : 'zh';
+const otherHref = locale === 'zh' ? (path.replace('/zh', '') || '/') : `/zh${path === '/' ? '' : path}`;
+---
+
+<!doctype html>
+<html lang={htmlLang} class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#07090d" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <SEO {title} {description} {path} {locale} {ogImage} {extraSchema} {noindex} />
+  </head>
+  <body class="min-h-screen bg-ink-950 font-sans text-ink-100 antialiased">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-copper-500 focus:px-4 focus:py-2 focus:text-ink-950"
+    >
+      {locale === 'zh' ? '跳到主要内容' : 'Skip to content'}
+    </a>
+    <Header locale={locale} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer locale={locale} />
+
+    <script>
+      // Simple page-scope enhancement: preload next route on nav hover
+      // (Astro handles this natively with the `<link rel="prefetch">` we emit below).
+    </script>
+  </body>
+</html>

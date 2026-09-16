@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.astro/
+
+# Cloudflare
+.wrangler/
+.dev.vars
+src/worker-configuration.d.ts
+
+# System / logs
+.DS_Store
+*.log
+/tmp/

@@ -1,0 +1,81 @@
+---
+import TrustBadges from '@/components/TrustBadges.astro';
+import { SITE, type Locale, getDict } from '@/lib/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = getDict(locale);
+const base = locale === 'zh' ? '/zh' : '';
+---
+
+<section
+  class="grain relative overflow-hidden border-b border-ink-800 pt-16"
+  aria-labelledby="hero-heading"
+>
+  <!-- Atmosphere -->
+  <div class="blueprint absolute inset-0" aria-hidden="true"></div>
+  <div class="copper-radial absolute inset-0" aria-hidden="true"></div>
+  <div
+    class="absolute -right-32 top-1/4 size-[480px] rounded-full bg-copper-600/10 blur-3xl"
+    aria-hidden="true"
+  ></div>
+
+  <div class="relative mx-auto max-w-7xl px-4 pb-20 pt-16 sm:px-6 sm:pt-24 lg:px-8">
+    <p class="animate-fade text-xs font-semibold uppercase tracking-[0.25em] text-copper-400">
+      {t.hero.eyebrow}
+    </p>
+
+    <h1
+      id="hero-heading"
+      class="font-expanded animate-rise mt-6 max-w-4xl text-4xl font-black leading-[1.05] text-ink-100 sm:text-6xl lg:text-7xl"
+      style="animation-delay: 0.08s;"
+    >
+      {t.hero.titleA}<br />
+      <span class="bg-gradient-to-r from-copper-300 via-copper-400 to-amber-glow bg-clip-text text-transparent">
+        {t.hero.titleB}
+      </span>
+    </h1>
+
+    <p class="animate-rise mt-6 max-w-2xl text-lg leading-relaxed text-ink-300" style="animation-delay: 0.16s;">
+      {t.hero.sub}
+    </p>
+
+    <!-- Dual funnel CTAs -->
+    <div class="animate-rise mt-9 flex flex-col gap-4 sm:flex-row" style="animation-delay: 0.24s;">
+      <a
+        href={`${base}/#estimator`}
+        class="group inline-flex items-center justify-center gap-2 rounded-xl bg-copper-500 px-7 py-4 text-base font-bold text-ink-950 shadow-[0_8px_40px_-8px_rgba(201,123,61,0.6)] transition-all hover:-translate-y-0.5 hover:bg-copper-400"
+      >
+        {t.hero.ctaPrimary}
+        <svg viewBox="0 0 24 24" class="size-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+          <path d="M5 12h14m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </a>
+      <a
+        href={`mailto:${SITE.rfpEmail}?subject=${encodeURIComponent('Commercial RFP / Vendor Account')}`}
+        class="inline-flex items-center justify-center rounded-xl border border-ink-600 bg-ink-900/60 px-7 py-4 text-base font-semibold text-ink-200 backdrop-blur transition-all hover:border-copper-500/60 hover:text-copper-300"
+      >
+        {t.hero.ctaSecondary}
+      </a>
+    </div>
+
+    <div class="animate-fade mt-10" style="animation-delay: 0.32s;">
+      <TrustBadges locale={locale} />
+    </div>
+
+    <!-- Stats -->
+    <dl class="mt-14 grid grid-cols-1 gap-6 border-t border-ink-800/70 pt-8 sm:grid-cols-3">
+      {
+        t.hero.stats.map((s, i) => (
+          <div class="animate-rise" style={`animation-delay: ${0.4 + i * 0.08}s;`}>
+            <dt class="order-2 text-sm text-ink-400">{s.l}</dt>
+            <dd class="font-expanded order-1 text-3xl font-bold text-copper-300">{s.v}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</section>

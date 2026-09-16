@@ -1,0 +1,17 @@
+---
+import { getCollection, render } from 'astro:content';
+import LocationView from '@/components/LocationView.astro';
+
+export async function getStaticPaths() {
+  const locations = await getCollection('locations');
+  return locations.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+await render(entry); // ensures content collection types stay warm
+---
+
+<LocationView entry={entry} locale="en" />

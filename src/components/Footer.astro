@@ -1,0 +1,95 @@
+---
+import { SITE, type Locale, getDict, localePath } from '@/lib/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = getDict(locale);
+const year = new Date().getFullYear();
+
+const serviceLinks = [
+  { key: 'moving', href: '/#services' },
+  { key: 'cleaning', href: '/#services' },
+  { key: 'junk', href: '/#services' },
+  { key: 'yard', href: '/#services' },
+  { key: 'snow', href: '/#services' },
+];
+
+const areaLinks = [
+  { name: 'Markham', href: '/locations/markham' },
+  { name: 'Richmond Hill', href: '/locations/richmond-hill' },
+  { name: 'Vaughan', href: '/locations/vaughan' },
+  { name: 'Thornhill', href: '/locations/thornhill' },
+  { name: 'Unionville', href: '/locations/unionville' },
+];
+---
+
+<footer class="border-t border-ink-800 bg-ink-950">
+  <div class="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-4 lg:px-8">
+    <!-- Brand -->
+    <div class="lg:col-span-2">
+      <p class="font-expanded text-lg font-bold text-ink-100">
+        {locale === 'zh' ? '张师傅' : 'MASTER ZHANG'}
+      </p>
+      <p class="mt-3 max-w-sm text-sm leading-relaxed text-ink-400">{t.footer.tagline}</p>
+      <p class="mt-6 text-xs text-ink-500">{t.footer.licensed}</p>
+    </div>
+
+    <!-- Services -->
+    <nav aria-label={t.footer.servicesTitle}>
+      <h3 class="text-xs font-bold uppercase tracking-wider text-ink-300">{t.footer.servicesTitle}</h3>
+      <ul class="mt-4 space-y-2.5 text-sm text-ink-400">
+        {
+          serviceLinks.map((s) => (
+            <li>
+              <a class="transition-colors hover:text-copper-300" href={localePath(s.href, locale)}>
+                {t.services.items.find((i) => i.id === s.key)?.title}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <!-- Areas + contact -->
+    <div>
+      <nav aria-label={t.footer.areasTitle}>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-ink-300">{t.footer.areasTitle}</h3>
+        <ul class="mt-4 space-y-2.5 text-sm text-ink-400">
+          {
+            areaLinks.map((a) => (
+              <li>
+                <a class="transition-colors hover:text-copper-300" href={localePath(a.href, locale)}>
+                  {locale === 'zh' ? a.name : a.name}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+      <h3 class="mt-8 text-xs font-bold uppercase tracking-wider text-ink-300">{t.footer.contactTitle}</h3>
+      <ul class="mt-4 space-y-2.5 text-sm text-ink-400">
+        <li>
+          <a class="transition-colors hover:text-copper-300" href={`tel:${SITE.phoneHref}`}>{SITE.phone}</a>
+        </li>
+        <li>
+          <a class="transition-colors hover:text-copper-300" href={`mailto:${SITE.email}`}>{SITE.email}</a>
+        </li>
+        <li class="text-ink-500">
+          {SITE.address.street}, {SITE.address.city}, {SITE.address.region} {SITE.address.postal}
+        </li>
+        <li class="text-ink-500">
+          {t.footer.hoursLabel}: {SITE.hours}
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="border-t border-ink-800/60">
+    <p class="mx-auto max-w-7xl px-4 py-6 text-xs text-ink-500 sm:px-6 lg:px-8">
+      © {year} {SITE.name}. {t.footer.rights}
+    </p>
+  </div>
+</footer>
