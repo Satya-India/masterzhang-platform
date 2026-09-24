@@ -1,0 +1,196 @@
+---
+/**
+ * /driver/[token]
+ * ---------------
+ * Driver GPS sender — mobile-first, no install required.
+ * The driver opens this URL on their phone and taps "Start Tracking".
+ * The page uses the browser Geolocation API to send coordinates every 15s.
+ */
+export const prerender = false;
+
+import type { GetStaticPaths } from 'astro';
+
+const driverToken = Astro.params.token as string;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Master Zhang — Driver Tracker</title>
+  <!-- Keep phone screen awake while tracking -->
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0a0a0f;
+      color: #e2e0d8;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1.25rem;
+    }
+    .logo { font-size: 0.875rem; font-weight: 700; color: #c8954a; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2rem; }
+    .card { background: #13131a; border: 1px solid #2a2a38; border-radius: 1.5rem; padding: 2rem; width: 100%; max-width: 380px; text-align: center; }
+    .status-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #6b7280; margin-right: 0.5rem; vertical-align: middle; }
+    .status-dot.active { background: #22c55e; box-shadow: 0 0 0 4px rgba(34,197,94,0.25); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { box-shadow: 0 0 0 4px rgba(34,197,94,0.25); } 50% { box-shadow: 0 0 0 8px rgba(34,197,94,0.1); } }
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .subtitle { color: #9ca3af; font-size: 0.875rem; margin-bottom: 1.5rem; }
+    .coords { font-size: 0.75rem; color: #6b7280; margin: 0.75rem 0; font-family: monospace; }
+    .btn { display: block; width: 100%; padding: 1rem; border-radius: 1rem; font-size: 1rem; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; margin-top: 1rem; }
+    .btn-start { background: #22c55e; color: #000; }
+    .btn-start:hover { background: #16a34a; }
+    .btn-stop  { background: #1a1a24; border: 1px solid #4b5563; color: #e2e0d8; }
+    .btn-stop:hover { border-color: #c8954a; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .status-label { font-size: 1.25rem; font-weight: 700; margin: 1.5rem 0 0.5rem; }
+    select {
+      width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem;
+      background: #1a1a24; border: 1px solid #2a2a38; color: #e2e0d8;
+      font-size: 0.875rem; margin-top: 1rem; appearance: none;
+    }
+    .error { color: #f87171; font-size: 0.875rem; margin-top: 0.75rem; }
+    .ping-count { font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem; }
+    .complete-banner { background: rgba(34,197,94,0.1); border: 1px solid #22c55e; border-radius: 1rem; padding: 1.25rem; color: #22c55e; font-weight: 700; font-size: 1.125rem; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="logo">张师傅 · Master Zhang</div>
+
+  <div class="card">
+    <h1>📍 Driver Tracker</h1>
+    <p class="subtitle">Open on your phone — tap Start to share your location.</p>
+
+    <div id="status-row">
+      <span class="status-dot" id="dot"></span>
+      <span id="status-text" style="font-size:0.875rem; color:#9ca3af;">Not tracking</span>
+    </div>
+
+    <div class="coords" id="coords-display">—</div>
+
+    <div>
+      <label style="font-size:0.8rem; color:#9ca3af; text-align:left; display:block; margin-bottom:0.25rem;">Job status</label>
+      <select id="job-status">
+        <option value="en_route">🚛 En route to customer</option>
+        <option value="arrived">📍 Arrived at location</option>
+        <option value="in_progress">🔧 Job in progress</option>
+        <option value="complete">✅ Job complete</option>
+      </select>
+    </div>
+
+    <button class="btn btn-start" id="btn-start">▶ Start Tracking</button>
+    <button class="btn btn-stop" id="btn-stop" style="display:none;">⏹ Stop Tracking</button>
+
+    <div class="error" id="error-msg" style="display:none;"></div>
+    <div class="ping-count" id="ping-count"></div>
+    <div class="complete-banner" id="complete-banner" style="display:none;">
+      ✅ Job marked complete. You can close this page.
+    </div>
+  </div>
+
+  <p style="margin-top:2rem; font-size:0.75rem; color:#4b5563; text-align:center;">
+    Keep this page open while on the job.<br/>
+    GPS updates every 15 seconds automatically.
+  </p>
+
+  <script define:vars={{ driverToken }}>
+    const DRIVER_TOKEN = driverToken;
+    const UPDATE_INTERVAL = 15_000; // 15 seconds
+
+    const dot        = document.getElementById('dot');
+    const statusText = document.getElementById('status-text');
+    const coordsEl   = document.getElementById('coords-display');
+    const btnStart   = document.getElementById('btn-start');
+    const btnStop    = document.getElementById('btn-stop');
+    const errorMsg   = document.getElementById('error-msg');
+    const pingCount  = document.getElementById('ping-count');
+    const jobStatusEl = document.getElementById('job-status');
+    const completeBanner = document.getElementById('complete-banner');
+
+    let intervalId = null;
+    let pings = 0;
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.style.display = 'block';
+    }
+    function clearError() { errorMsg.style.display = 'none'; }
+
+    async function sendLocation(lat, lng) {
+      const status = jobStatusEl.value;
+      try {
+        const res = await fetch('/api/location/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ driverToken: DRIVER_TOKEN, lat, lng, status }),
+        });
+        if (!res.ok) {
+          const msg = await res.text();
+          showError(`Server error: ${msg}`);
+          return;
+        }
+        clearError();
+        pings++;
+        pingCount.textContent = `${pings} update${pings === 1 ? '' : 's'} sent`;
+
+        // If job marked complete — stop tracking and show banner
+        if (status === 'complete') {
+          stopTracking();
+          completeBanner.style.display = 'block';
+        }
+      } catch (err) {
+        showError('Network error — check your connection');
+      }
+    }
+
+    function getAndSend() {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+          coordsEl.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)} ± ${Math.round(accuracy)}m`;
+          sendLocation(lat, lng);
+        },
+        (err) => showError(`GPS error: ${err.message}`),
+        { enableHighAccuracy: true, timeout: 10_000, maximumAge: 5_000 },
+      );
+    }
+
+    function startTracking() {
+      if (!('geolocation' in navigator)) {
+        showError('GPS not available on this device');
+        return;
+      }
+      dot.classList.add('active');
+      statusText.textContent = 'Tracking active';
+      btnStart.style.display = 'none';
+      btnStop.style.display = 'block';
+      getAndSend(); // immediate first ping
+      intervalId = setInterval(getAndSend, UPDATE_INTERVAL);
+    }
+
+    function stopTracking() {
+      clearInterval(intervalId);
+      intervalId = null;
+      dot.classList.remove('active');
+      statusText.textContent = 'Tracking stopped';
+      btnStart.style.display = 'block';
+      btnStop.style.display = 'none';
+    }
+
+    btnStart.addEventListener('click', startTracking);
+    btnStop.addEventListener('click', stopTracking);
+
+    // Auto-start if page reloaded after tracking was active (visibilitychange)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && intervalId === null) {
+        // Page came back into view — prompt to restart
+        statusText.textContent = 'Tap Start to resume';
+      }
+    });
+  </script>
+</body>
+</html>

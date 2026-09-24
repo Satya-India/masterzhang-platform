@@ -1,0 +1,5 @@
+---
+// /admin — redirect to dispatch if logged in, else to login
+export const prerender = false;
+return Astro.redirect('/admin/dispatch', 302);
+---

@@ -1,0 +1,252 @@
+---
+/**
+ * /track/[token]
+ * ---------------
+ * Customer-facing live tracking page.
+ * Loads job info server-side, then polls /api/location/read every 10s
+ * and updates the Google Maps marker in real-time.
+ */
+export const prerender = false;
+
+import { getJobByTrackToken, STATUS_LABELS } from '@/lib/jobs';
+
+const { token } = Astro.params;
+const env = (Astro.locals as any).runtime?.env;
+const kv = env?.JOBS;
+const mapsKey = env?.PUBLIC_GOOGLE_MAPS_KEY ?? '';
+
+// Initial server-side job load (for SSR render + SEO)
+const job = kv && token ? await getJobByTrackToken(kv, token) : null;
+
+if (!job) {
+  return new Response(null, { status: 404 });
+}
+
+const label = STATUS_LABELS[job.status];
+const isComplete = job.status === 'complete';
+
+// Locale detection
+const acceptLang = Astro.request.headers.get('Accept-Language') ?? '';
+const isZh = acceptLang.toLowerCase().startsWith('zh');
+const statusLabel = isZh ? label.zh : label.en;
+---
+
+<!DOCTYPE html>
+<html lang={isZh ? 'zh-CN' : 'en-CA'}>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>
+    {isZh ? '追踪您的服务 — 张师傅' : 'Track Your Service — Master Zhang'}
+  </title>
+  <!-- Google Maps JS API — loaded only after user consent implicit in opening tracking link -->
+  {mapsKey && <script src={`https://maps.googleapis.com/maps/api/js?key=${mapsKey}&libraries=marker`} async is:inline />}
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0a0f; color: #e2e0d8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100dvh; display: flex; flex-direction: column; }
+    header { background: #13131a; border-bottom: 1px solid #1e1e2a; padding: 0.875rem 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+    .logo { color: #c8954a; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+    .status-bar { padding: 1rem 1.25rem; background: #13131a; border-bottom: 1px solid #1e1e2a; }
+    .status-main { display: flex; align-items: center; gap: 0.75rem; }
+    .status-icon { font-size: 1.5rem; }
+    .status-text { font-size: 1.1rem; font-weight: 700; }
+    .driver-info { margin-top: 0.375rem; font-size: 0.8rem; color: #9ca3af; }
+    .update-info { font-size: 0.7rem; color: #6b7280; margin-top: 0.25rem; }
+    #map { flex: 1; min-height: 340px; background: #1a1a24; position: relative; }
+    #map-placeholder { position: absolute; inset: 0; display: grid; place-items: center; color: #6b7280; font-size: 0.875rem; text-align: center; gap: 0.5rem; }
+    .map-pin { font-size: 3rem; }
+    .info-panel { padding: 1.25rem; background: #13131a; border-top: 1px solid #1e1e2a; }
+    .info-row { display: flex; justify-content: space-between; align-items: baseline; padding: 0.5rem 0; border-bottom: 1px solid #1a1a24; font-size: 0.875rem; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #9ca3af; }
+    .info-val { font-weight: 600; text-align: right; }
+    .complete-banner { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.4); border-radius: 1rem; padding: 1.25rem; text-align: center; margin: 1.25rem; }
+    .complete-title { color: #4ade80; font-size: 1.25rem; font-weight: 700; margin-bottom: 0.375rem; }
+    .complete-sub { color: #9ca3af; font-size: 0.875rem; }
+    .pulse-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; margin-right: 6px; vertical-align: middle; }
+    .pulse-dot.active { animation: gps-pulse 1.5s infinite; }
+    @keyframes gps-pulse { 0%,100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.3); } 50% { box-shadow: 0 0 0 7px rgba(34,197,94,0.1); } }
+    .no-maps-msg { background: #1a1a24; border: 1px dashed #2a2a38; border-radius: 1rem; padding: 2rem; text-align: center; margin: 1rem; }
+    .no-maps-msg h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+    .no-maps-msg p { font-size: 0.8rem; color: #9ca3af; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">张师傅 · Master Zhang</div>
+  </header>
+
+  <!-- Status bar (updated live by JS) -->
+  <div class="status-bar">
+    <div class="status-main">
+      <span class="status-icon" id="status-icon">
+        {job.status === 'complete' ? '✅' : job.status === 'in_progress' ? '🔧' : job.status === 'arrived' ? '📍' : job.status === 'en_route' ? '🚛' : '⏳'}
+      </span>
+      <div>
+        <div class="status-text" id="status-text">{statusLabel}</div>
+        {job.driverName && (
+          <div class="driver-info" id="driver-info">
+            {job.driverName} · {job.vehicleLabel}
+          </div>
+        )}
+      </div>
+    </div>
+    <div class="update-info" id="update-info">
+      {job.lat
+        ? `GPS updated ${Math.round((Date.now() - new Date(job.lastUpdated).getTime()) / 1000)}s ago`
+        : (isZh ? '等待驾驶员 GPS 信号…' : 'Waiting for driver GPS signal…')}
+    </div>
+  </div>
+
+  <!-- Map area -->
+  <div id="map" style="position:relative;">
+    {!mapsKey && (
+      <div class="no-maps-msg">
+        <h3>🗺️ {isZh ? '地图即将上线' : 'Map Coming Soon'}</h3>
+        <p>{isZh ? 'Google Maps API 密钥配置后地图将显示在此处。' : 'Google Maps will appear here once the API key is configured.'}</p>
+      </div>
+    )}
+    <div id="map-canvas" style="width:100%;height:100%;min-height:340px;"></div>
+  </div>
+
+  <!-- Job info panel -->
+  <div class="info-panel">
+    <div class="info-row">
+      <span class="info-label">{isZh ? '服务类型' : 'Service'}</span>
+      <span class="info-val" id="service-type">
+        {job.serviceType === 'moving' ? (isZh ? '搬家服务' : 'Moving Help')
+          : job.serviceType === 'cleanup' ? (isZh ? '清洁与垃圾清运' : 'Clean & Junk Removal')
+          : job.serviceType === 'snow' ? (isZh ? '铲雪服务' : 'Snow Clearing')
+          : (isZh ? '庭院养护' : 'Yard & Garden')}
+      </span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">{isZh ? '地址' : 'Location'}</span>
+      <span class="info-val">{job.serviceAddress}</span>
+    </div>
+    {job.scheduledAt && (
+      <div class="info-row">
+        <span class="info-label">{isZh ? '预约时间' : 'Scheduled'}</span>
+        <span class="info-val" id="scheduled">
+          {new Date(job.scheduledAt).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+        </span>
+      </div>
+    )}
+    <div class="info-row">
+      <span class="info-label">{isZh ? '联系我们' : 'Questions?'}</span>
+      <span class="info-val">
+        <a href={`tel:+14168463253`} style="color:#c8954a;">+1 (416) 846-3253</a>
+      </span>
+    </div>
+  </div>
+
+  {isComplete && (
+    <div class="complete-banner">
+      <div class="complete-title">✅ {isZh ? '服务已完成' : 'Job Complete'}</div>
+      <div class="complete-sub">{isZh ? '感谢您选择张师傅！' : 'Thank you for choosing Master Zhang!'}</div>
+    </div>
+  )}
+
+  <script define:vars={{ trackToken: token, initialLat: job.lat, initialLng: job.lng, hasMapsKey: !!mapsKey, isZh, isComplete }}>
+    const POLL_INTERVAL = 10_000; // 10 seconds
+    const STATUS_ICONS = {
+      pending: '⏳', assigned: '⏳', en_route: '🚛',
+      arrived: '📍', in_progress: '🔧', complete: '✅'
+    };
+
+    let map = null;
+    let marker = null;
+    let pollTimer = null;
+
+    // ── Google Maps init ──────────────────────────────────────────────────
+    function initMap(lat, lng) {
+      if (!hasMapsKey || !window.google) return;
+      if (map) return;
+
+      const pos = { lat, lng };
+      map = new google.maps.Map(document.getElementById('map-canvas'), {
+        center: pos,
+        zoom: 14,
+        mapTypeId: 'roadmap',
+        styles: [
+          { elementType: 'geometry', stylers: [{ color: '#1a1a24' }] },
+          { elementType: 'labels.text.fill', stylers: [{ color: '#9ca3af' }] },
+          { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1a24' }] },
+          { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2a2a38' }] },
+          { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0a0a0f' }] },
+          { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+        ],
+      });
+
+      marker = new google.maps.Marker({
+        position: pos,
+        map,
+        title: 'Driver location',
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 14,
+          fillColor: '#c8954a',
+          fillOpacity: 1,
+          strokeColor: '#fff',
+          strokeWeight: 3,
+        },
+      });
+    }
+
+    function updateMapMarker(lat, lng) {
+      if (!map || !marker) { initMap(lat, lng); return; }
+      const pos = { lat, lng };
+      marker.setPosition(pos);
+      map.panTo(pos);
+    }
+
+    // ── Polling ───────────────────────────────────────────────────────────
+    async function poll() {
+      try {
+        const res = await fetch(`/api/location/read?t=${trackToken}`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // Update status
+        const icon = STATUS_ICONS[data.status] ?? '📍';
+        document.getElementById('status-icon').textContent = icon;
+        document.getElementById('status-text').textContent = isZh ? data.statusZh : data.statusEn;
+
+        if (data.driverName) {
+          document.getElementById('driver-info').textContent = `${data.driverName} · ${data.vehicleLabel ?? ''}`;
+        }
+
+        if (data.lat && data.lng) {
+          updateMapMarker(data.lat, data.lng);
+          const secs = Math.round((Date.now() - new Date(data.lastUpdated).getTime()) / 1000);
+          document.getElementById('update-info').textContent =
+            isZh ? `GPS 更新于 ${secs} 秒前` : `GPS updated ${secs}s ago`;
+        }
+
+        // Stop polling when complete
+        if (data.status === 'complete') {
+          clearInterval(pollTimer);
+          document.getElementById('update-info').textContent =
+            isZh ? '服务已完成' : 'Job complete';
+        }
+      } catch {
+        // silent — will retry on next poll
+      }
+    }
+
+    // ── Boot ─────────────────────────────────────────────────────────────
+    if (initialLat && initialLng) {
+      // Map API may not be loaded yet — wait for it
+      if (hasMapsKey) {
+        window.addEventListener('load', () => initMap(initialLat, initialLng));
+      }
+    }
+
+    if (!isComplete) {
+      poll(); // immediate first poll
+      pollTimer = setInterval(poll, POLL_INTERVAL);
+    }
+  </script>
+</body>
+</html>

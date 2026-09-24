@@ -2,6 +2,8 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
+import { createJob } from '@/lib/jobs';
+
 
 /* ------------------------------------------------------------------ */
 /* Schema — mirrors the estimator's server-side pricing table          */
@@ -146,6 +148,32 @@ export const POST: APIRoute = async ({ request, locals }) => {
     sourceIp: ip,
   };
 
+  /* ---- Create job tracking record in KV (best-effort) ---- */
+  let trackToken: string | null = null;
+  const kv = env.JOBS;
+  if (kv) {
+    try {
+      const job = await createJob(kv, {
+        jobId: quoteId,
+        customerName: q.name,
+        customerEmail: q.email,
+        customerPhone: q.phone,
+        serviceType: q.service,
+        serviceAddress: q.postalCode,
+        scheduledAt: '',
+        notes: q.notes ?? '',
+        driverName: '',
+        vehicleLabel: '',
+      });
+      trackToken = job.trackToken;
+    } catch (err) {
+      console.error('job_create_failed', err);
+    }
+  }
+
+  const adminUrl = `${SITE_URL}/admin/dispatch`;
+  const trackUrl = trackToken ? `${SITE_URL}/track/${trackToken}` : null;
+
   /* ---- Dispatch 1: generic webhook (Slack / Discord / Make / Zapier) ---- */
   if (env.QUOTE_WEBHOOK_URL) {
     try {
@@ -153,8 +181,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          content: `🔔 New quote ${payload.id} — ${q.service}/${q.volume} — ${q.postalCode}${inRegion ? '' : ' (OUT OF REGION)'}`,
+          content: `🔔 New quote ${payload.id} — ${q.service}/${q.volume} — ${q.postalCode}${inRegion ? '' : ' (OUT OF REGION)'}\n📋 Dispatch: ${adminUrl}${trackUrl ? `\n📍 Track: ${trackUrl}` : ''}`,
           ...payload,
+          trackUrl,
+          adminUrl,
         }),
       });
     } catch (err) {
@@ -175,7 +205,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
           from: 'quotes@masterzhang.ca',
           to: [env.QUOTE_DESTINATION_EMAIL],
           subject: `[${payload.id}] ${q.service} quote — ${q.postalCode}${inRegion ? '' : ' (OUT OF REGION)'}`,
-          text: JSON.stringify(payload, null, 2),
+          text: [
+            JSON.stringify(payload, null, 2),
+            '',
+            '--- DISPATCH ---',
+            `Admin dashboard: ${adminUrl}`,
+            trackUrl ? `Customer tracking URL: ${trackUrl}` : '',
+          ].join('\n'),
         }),
       });
     } catch (err) {
@@ -189,4 +225,5 @@ export const POST: APIRoute = async ({ request, locals }) => {
 };
 
 export const ALL: APIRoute = () => json({ ok: false, error: 'method_not_allowed' }, 405);
+
 

@@ -15,11 +15,26 @@ pages_build_output_dir = "./dist"
 PUBLIC_SITE_URL = "https://masterzhang.ca"
 PUBLIC_BUSINESS_PHONE = "+14168463253"
 PUBLIC_SERVICE_REGION = "Markham & York Region, ON"
+# Paste your Google Maps JS API key here once created (restrict to HTTP referrers).
+PUBLIC_GOOGLE_MAPS_KEY = ""
+
+# ---------------------------------------------------------------------------
+# KV Namespaces
+# ---------------------------------------------------------------------------
+[[kv_namespaces]]
+binding = "SESSION"
+id = "36b9aba3d9174050a93a23af1a1e7f40"
+
+[[kv_namespaces]]
+# Job tracking data: driver location, status, tokens
+binding = "JOBS"
+id = "e5a240357fc6406e8e31678b442cf0a9"
 
 # ---------------------------------------------------------------------------
 # SECRETS — do NOT put these in this file. Set them via:
-#   npx wrangler pages secret put QUOTE_WEBHOOK_URL   (Slack/Discord/Make.com)
-#   npx wrangler pages secret put RESEND_API_KEY      (transactional email)
+#   npx wrangler pages secret put QUOTE_WEBHOOK_URL      (Slack/Discord/Make.com)
+#   npx wrangler pages secret put RESEND_API_KEY         (transactional email)
 #   npx wrangler pages secret put QUOTE_DESTINATION_EMAIL
-# They are read at runtime from `locals.runtime.env` inside /api/quote.
+#   npx wrangler pages secret put ADMIN_PASSWORD         (dispatcher panel login)
+# They are read at runtime from `locals.runtime.env` inside API routes.
 # ---------------------------------------------------------------------------
