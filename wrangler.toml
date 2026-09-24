@@ -1,6 +1,6 @@
 #:schema node_modules/wrangler/config-schema.json
 # ---------------------------------------------------------------------------
-# Cloudflare Pages configuration — Master Zhang Platform
+# Cloudflare Pages configuration — Nexus Care Platform
 # Deploy: `npx wrangler pages deploy ./dist` (or connect the repo in the
 # Cloudflare dashboard with build command `npx astro build`).
 # ---------------------------------------------------------------------------
@@ -12,7 +12,7 @@ pages_build_output_dir = "./dist"
 
 # Non-secret environment variables (available at build AND runtime).
 [vars]
-PUBLIC_SITE_URL = "https://masterzhang.ca"
+PUBLIC_SITE_URL = "https://nexuscare.ca"
 PUBLIC_BUSINESS_PHONE = "+14168463253"
 PUBLIC_SERVICE_REGION = "Markham & York Region, ON"
 # Google Maps key not needed — using free Leaflet + OpenStreetMap instead

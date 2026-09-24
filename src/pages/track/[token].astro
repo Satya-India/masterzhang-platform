@@ -53,7 +53,7 @@ function scheduledDisplay(iso: string) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>{isZh ? '追踪您的服务 — 张师傅' : 'Track Your Service — Master Zhang'}</title>
+  <title>{isZh ? '追踪您的服务 — Nexus Care' : 'Track Your Service — Nexus Care'}</title>
 
   <!-- Leaflet CSS (free, open-source) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -137,7 +137,7 @@ function scheduledDisplay(iso: string) {
 
 <body>
   <header>
-    <div class="logo">张师傅 · Master Zhang</div>
+    <div class="logo">NEXUS CARE</div>
   </header>
 
   <!-- Live status bar -->
@@ -202,7 +202,7 @@ function scheduledDisplay(iso: string) {
   {isComplete && (
     <div class="complete-banner">
       <div class="complete-title">✅ {isZh ? '服务已完成' : 'Job Complete'}</div>
-      <div class="complete-sub">{isZh ? '感谢您选择张师傅！' : 'Thank you for choosing Master Zhang!'}</div>
+      <div class="complete-sub">{isZh ? '感谢您选择 Nexus Care！' : 'Thank you for choosing Nexus Care!'}</div>
     </div>
   )}
 

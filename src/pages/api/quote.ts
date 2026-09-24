@@ -84,7 +84,7 @@ const json = (body: unknown, status = 200) =>
 export const POST: APIRoute = async ({ request, locals }) => {
   // Cloudflare runtime env (works on Pages and via the dev platformProxy)
   const env = (locals as any)?.runtime?.env ?? {};
-  const SITE_URL = env.PUBLIC_SITE_URL ?? 'https://masterzhang.ca';
+  const SITE_URL = env.PUBLIC_SITE_URL ?? 'https://nexuscare.ca';
 
   /* ---- Guards ---- */
   const ip =
@@ -202,7 +202,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'quotes@masterzhang.ca',
+          from: 'quotes@nexuscare.ca',
           to: [env.QUOTE_DESTINATION_EMAIL],
           subject: `[${payload.id}] ${q.service} quote — ${q.postalCode}${inRegion ? '' : ' (OUT OF REGION)'}`,
           text: [

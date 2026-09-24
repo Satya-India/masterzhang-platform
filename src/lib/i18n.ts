@@ -6,12 +6,12 @@ export const LOCALES: { code: Locale; label: string; htmlLang: string }[] = [
 ];
 
 export const SITE = {
-  name: 'Master Zhang Property Care',
-  nameZh: '张师傅 · 搬运清洁物业维护',
+  name: 'Nexus Care',
+  nameZh: 'Nexus Care · 综合物业服务',
   phone: '+1 (416) 846-3253',
   phoneHref: '+14168463253',
-  email: 'hello@masterzhang.ca',
-  rfpEmail: 'rfp@masterzhang.ca',
+  email: 'hello@nexuscare.ca',
+  rfpEmail: 'rfp@nexuscare.ca',
   address: {
     /** Street address — leave empty until a physical office address is confirmed. */
     street: '',
@@ -22,6 +22,7 @@ export const SITE = {
   },
   hours: 'Mon–Sat 07:00–21:00 · Sun 08:00–18:00',
 } as const;
+
 
 /** Prefix a path with the locale segment (EN is served from root). */
 export function localePath(path: string, locale: Locale): string {
