@@ -3,8 +3,8 @@
  * /track/[token]
  * ---------------
  * Customer-facing live tracking page.
- * Loads job info server-side, then polls /api/location/read every 10s
- * and updates the Google Maps marker in real-time.
+ * Uses Leaflet.js + OpenStreetMap (100% free, no API key needed).
+ * Polls /api/location/read every 10s and updates the driver marker.
  */
 export const prerender = false;
 
@@ -13,9 +13,8 @@ import { getJobByTrackToken, STATUS_LABELS } from '@/lib/jobs';
 const { token } = Astro.params;
 const env = (Astro.locals as any).runtime?.env;
 const kv = env?.JOBS;
-const mapsKey = env?.PUBLIC_GOOGLE_MAPS_KEY ?? '';
 
-// Initial server-side job load (for SSR render + SEO)
+// Server-side job load
 const job = kv && token ? await getJobByTrackToken(kv, token) : null;
 
 if (!job) {
@@ -25,10 +24,27 @@ if (!job) {
 const label = STATUS_LABELS[job.status];
 const isComplete = job.status === 'complete';
 
-// Locale detection
+// Locale detection from Accept-Language header
 const acceptLang = Astro.request.headers.get('Accept-Language') ?? '';
 const isZh = acceptLang.toLowerCase().startsWith('zh');
 const statusLabel = isZh ? label.zh : label.en;
+
+const serviceLabels: Record<string, { en: string; zh: string }> = {
+  moving:  { en: 'Moving Help',          zh: '搬家服务' },
+  cleanup: { en: 'Clean & Junk Removal', zh: '清洁与垃圾清运' },
+  snow:    { en: 'Snow Clearing',        zh: '铲雪服务' },
+  yard:    { en: 'Yard & Garden',        zh: '庭院养护' },
+};
+const serviceLabel = serviceLabels[job.serviceType] ?? { en: job.serviceType, zh: job.serviceType };
+
+function scheduledDisplay(iso: string) {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleString('en-CA', {
+      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true,
+    });
+  } catch { return iso; }
+}
 ---
 
 <!DOCTYPE html>
@@ -37,89 +53,133 @@ const statusLabel = isZh ? label.zh : label.en;
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>
-    {isZh ? '追踪您的服务 — 张师傅' : 'Track Your Service — Master Zhang'}
-  </title>
-  <!-- Google Maps JS API — loaded only after user consent implicit in opening tracking link -->
-  {mapsKey && <script src={`https://maps.googleapis.com/maps/api/js?key=${mapsKey}&libraries=marker`} async is:inline />}
+  <title>{isZh ? '追踪您的服务 — 张师傅' : 'Track Your Service — Master Zhang'}</title>
+
+  <!-- Leaflet CSS (free, open-source) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #0a0a0f; color: #e2e0d8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100dvh; display: flex; flex-direction: column; }
-    header { background: #13131a; border-bottom: 1px solid #1e1e2a; padding: 0.875rem 1.25rem; display: flex; align-items: center; gap: 0.75rem; }
+    html, body { height: 100%; }
+    body {
+      background: #0a0a0f; color: #e2e0d8;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100dvh; display: flex; flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #13131a; border-bottom: 1px solid #1e1e2a;
+      padding: 0.875rem 1.25rem; flex-shrink: 0;
+    }
     .logo { color: #c8954a; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
-    .status-bar { padding: 1rem 1.25rem; background: #13131a; border-bottom: 1px solid #1e1e2a; }
+
+    /* ── Status bar ── */
+    .status-bar {
+      padding: 0.875rem 1.25rem; background: #13131a;
+      border-bottom: 1px solid #1e1e2a; flex-shrink: 0;
+    }
     .status-main { display: flex; align-items: center; gap: 0.75rem; }
-    .status-icon { font-size: 1.5rem; }
-    .status-text { font-size: 1.1rem; font-weight: 700; }
-    .driver-info { margin-top: 0.375rem; font-size: 0.8rem; color: #9ca3af; }
-    .update-info { font-size: 0.7rem; color: #6b7280; margin-top: 0.25rem; }
-    #map { flex: 1; min-height: 340px; background: #1a1a24; position: relative; }
-    #map-placeholder { position: absolute; inset: 0; display: grid; place-items: center; color: #6b7280; font-size: 0.875rem; text-align: center; gap: 0.5rem; }
-    .map-pin { font-size: 3rem; }
-    .info-panel { padding: 1.25rem; background: #13131a; border-top: 1px solid #1e1e2a; }
-    .info-row { display: flex; justify-content: space-between; align-items: baseline; padding: 0.5rem 0; border-bottom: 1px solid #1a1a24; font-size: 0.875rem; }
+    .status-icon { font-size: 1.5rem; line-height: 1; }
+    .status-text { font-size: 1rem; font-weight: 700; }
+    .driver-info { margin-top: 0.25rem; font-size: 0.8rem; color: #9ca3af; }
+    .update-row { display: flex; align-items: center; gap: 0.375rem; margin-top: 0.375rem; }
+    .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
+    .pulse.active { animation: gpspulse 1.5s infinite; }
+    .pulse.stale  { background: #4b5563; }
+    @keyframes gpspulse {
+      0%,100% { box-shadow: 0 0 0 3px rgba(34,197,94,.25); }
+      50%      { box-shadow: 0 0 0 7px rgba(34,197,94,.08); }
+    }
+    .update-text { font-size: 0.7rem; color: #6b7280; }
+
+    /* ── Map ── */
+    #map-wrap { flex: 1; min-height: 320px; position: relative; background: #1a1a24; }
+    #map      { width: 100%; height: 100%; min-height: 320px; }
+
+    /* Leaflet dark overrides */
+    .leaflet-container { background: #1a1a24 !important; }
+    .leaflet-control-attribution { background: rgba(10,10,15,.7) !important; color: #6b7280 !important; font-size: 0.65rem !important; }
+    .leaflet-control-attribution a { color: #9ca3af !important; }
+    .leaflet-control-zoom a { background: #13131a !important; color: #c8954a !important; border-color: #2a2a38 !important; }
+    .leaflet-control-zoom a:hover { background: #1a1a24 !important; }
+
+    /* No-GPS placeholder (shown before first fix) */
+    #no-gps {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 0.5rem;
+      color: #6b7280; font-size: 0.875rem; text-align: center; padding: 1.5rem;
+      pointer-events: none; z-index: 1000;
+    }
+    #no-gps span { font-size: 2.5rem; display: block; }
+    #no-gps.hidden { display: none; }
+
+    /* ── Info panel ── */
+    .info-panel { padding: 1.125rem 1.25rem; background: #13131a; border-top: 1px solid #1e1e2a; flex-shrink: 0; }
+    .info-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 0.45rem 0; border-bottom: 1px solid #1a1a24; font-size: 0.875rem;
+    }
     .info-row:last-child { border-bottom: none; }
     .info-label { color: #9ca3af; }
     .info-val { font-weight: 600; text-align: right; }
-    .complete-banner { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.4); border-radius: 1rem; padding: 1.25rem; text-align: center; margin: 1.25rem; }
-    .complete-title { color: #4ade80; font-size: 1.25rem; font-weight: 700; margin-bottom: 0.375rem; }
-    .complete-sub { color: #9ca3af; font-size: 0.875rem; }
-    .pulse-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; margin-right: 6px; vertical-align: middle; }
-    .pulse-dot.active { animation: gps-pulse 1.5s infinite; }
-    @keyframes gps-pulse { 0%,100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.3); } 50% { box-shadow: 0 0 0 7px rgba(34,197,94,0.1); } }
-    .no-maps-msg { background: #1a1a24; border: 1px dashed #2a2a38; border-radius: 1rem; padding: 2rem; text-align: center; margin: 1rem; }
-    .no-maps-msg h3 { font-size: 1rem; margin-bottom: 0.5rem; }
-    .no-maps-msg p { font-size: 0.8rem; color: #9ca3af; }
+
+    /* ── Complete banner ── */
+    .complete-banner {
+      background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.35);
+      border-radius: 1rem; padding: 1.125rem; text-align: center; margin: 1rem 1.25rem;
+    }
+    .complete-title { color: #4ade80; font-size: 1.125rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .complete-sub   { color: #9ca3af; font-size: 0.8rem; }
   </style>
 </head>
+
 <body>
   <header>
     <div class="logo">张师傅 · Master Zhang</div>
   </header>
 
-  <!-- Status bar (updated live by JS) -->
+  <!-- Live status bar -->
   <div class="status-bar">
     <div class="status-main">
       <span class="status-icon" id="status-icon">
-        {job.status === 'complete' ? '✅' : job.status === 'in_progress' ? '🔧' : job.status === 'arrived' ? '📍' : job.status === 'en_route' ? '🚛' : '⏳'}
+        {job.status === 'complete'     ? '✅'
+          : job.status === 'in_progress' ? '🔧'
+          : job.status === 'arrived'     ? '📍'
+          : job.status === 'en_route'    ? '🚛' : '⏳'}
       </span>
       <div>
         <div class="status-text" id="status-text">{statusLabel}</div>
-        {job.driverName && (
-          <div class="driver-info" id="driver-info">
-            {job.driverName} · {job.vehicleLabel}
-          </div>
-        )}
+        <div class="driver-info" id="driver-info">
+          {job.driverName ? `${job.driverName} · ${job.vehicleLabel}` : ''}
+        </div>
       </div>
     </div>
-    <div class="update-info" id="update-info">
-      {job.lat
-        ? `GPS updated ${Math.round((Date.now() - new Date(job.lastUpdated).getTime()) / 1000)}s ago`
-        : (isZh ? '等待驾驶员 GPS 信号…' : 'Waiting for driver GPS signal…')}
+    <div class="update-row">
+      <span class="pulse" id="pulse-dot"></span>
+      <span class="update-text" id="update-text">
+        {job.lat
+          ? (isZh ? 'GPS 信号更新中' : 'Receiving GPS updates')
+          : (isZh ? '等待驾驶员 GPS 信号…' : 'Waiting for driver GPS signal…')}
+      </span>
     </div>
   </div>
 
-  <!-- Map area -->
-  <div id="map" style="position:relative;">
-    {!mapsKey && (
-      <div class="no-maps-msg">
-        <h3>🗺️ {isZh ? '地图即将上线' : 'Map Coming Soon'}</h3>
-        <p>{isZh ? 'Google Maps API 密钥配置后地图将显示在此处。' : 'Google Maps will appear here once the API key is configured.'}</p>
-      </div>
-    )}
-    <div id="map-canvas" style="width:100%;height:100%;min-height:340px;"></div>
+  <!-- Map -->
+  <div id="map-wrap">
+    <div id="no-gps" class={job.lat ? 'hidden' : ''}>
+      <span>📍</span>
+      <p>{isZh ? '等待 GPS 信号，地图将在驾驶员出发后自动显示。' : 'Map will appear automatically once the driver starts tracking.'}</p>
+    </div>
+    <div id="map"></div>
   </div>
 
-  <!-- Job info panel -->
+  <!-- Job details -->
   <div class="info-panel">
     <div class="info-row">
       <span class="info-label">{isZh ? '服务类型' : 'Service'}</span>
-      <span class="info-val" id="service-type">
-        {job.serviceType === 'moving' ? (isZh ? '搬家服务' : 'Moving Help')
-          : job.serviceType === 'cleanup' ? (isZh ? '清洁与垃圾清运' : 'Clean & Junk Removal')
-          : job.serviceType === 'snow' ? (isZh ? '铲雪服务' : 'Snow Clearing')
-          : (isZh ? '庭院养护' : 'Yard & Garden')}
-      </span>
+      <span class="info-val">{isZh ? serviceLabel.zh : serviceLabel.en}</span>
     </div>
     <div class="info-row">
       <span class="info-label">{isZh ? '地址' : 'Location'}</span>
@@ -128,15 +188,13 @@ const statusLabel = isZh ? label.zh : label.en;
     {job.scheduledAt && (
       <div class="info-row">
         <span class="info-label">{isZh ? '预约时间' : 'Scheduled'}</span>
-        <span class="info-val" id="scheduled">
-          {new Date(job.scheduledAt).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
-        </span>
+        <span class="info-val">{scheduledDisplay(job.scheduledAt)}</span>
       </div>
     )}
     <div class="info-row">
       <span class="info-label">{isZh ? '联系我们' : 'Questions?'}</span>
       <span class="info-val">
-        <a href={`tel:+14168463253`} style="color:#c8954a;">+1 (416) 846-3253</a>
+        <a href="tel:+14168463253" style="color:#c8954a;">+1 (416) 846-3253</a>
       </span>
     </div>
   </div>
@@ -148,105 +206,114 @@ const statusLabel = isZh ? label.zh : label.en;
     </div>
   )}
 
-  <script define:vars={{ trackToken: token, initialLat: job.lat, initialLng: job.lng, hasMapsKey: !!mapsKey, isZh, isComplete }}>
-    const POLL_INTERVAL = 10_000; // 10 seconds
+  <!-- Leaflet JS (free, open-source) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLs=" crossorigin="" is:inline></script>
+
+  <script define:vars={{ trackToken: token, initialLat: job.lat, initialLng: job.lng, isZh, isComplete }}>
+    const POLL_MS = 10_000;
+    const DEFAULT_LAT = 43.856;   // Markham, ON centre
+    const DEFAULT_LNG = -79.337;
     const STATUS_ICONS = {
       pending: '⏳', assigned: '⏳', en_route: '🚛',
-      arrived: '📍', in_progress: '🔧', complete: '✅'
+      arrived: '📍', in_progress: '🔧', complete: '✅',
     };
 
     let map = null;
     let marker = null;
     let pollTimer = null;
 
-    // ── Google Maps init ──────────────────────────────────────────────────
-    function initMap(lat, lng) {
-      if (!hasMapsKey || !window.google) return;
+    // ── Init Leaflet map ─────────────────────────────────────────────────
+    function initLeaflet(lat, lng) {
       if (map) return;
 
-      const pos = { lat, lng };
-      map = new google.maps.Map(document.getElementById('map-canvas'), {
-        center: pos,
-        zoom: 14,
-        mapTypeId: 'roadmap',
-        styles: [
-          { elementType: 'geometry', stylers: [{ color: '#1a1a24' }] },
-          { elementType: 'labels.text.fill', stylers: [{ color: '#9ca3af' }] },
-          { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1a24' }] },
-          { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2a2a38' }] },
-          { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0a0a0f' }] },
-          { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-        ],
+      map = L.map('map', { zoomControl: true, attributionControl: true }).setView([lat, lng], 14);
+
+      // CartoDB Dark Matter tiles — free, no API key
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20,
+      }).addTo(map);
+
+      // Custom copper driver marker
+      const driverIcon = L.divIcon({
+        className: '',
+        html: `<div style="
+          width:36px; height:36px; border-radius:50%;
+          background:#c8954a; border:3px solid #fff;
+          display:flex; align-items:center; justify-content:center;
+          font-size:18px; box-shadow:0 2px 8px rgba(0,0,0,.5);
+        ">🚛</div>`,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18],
       });
 
-      marker = new google.maps.Marker({
-        position: pos,
-        map,
-        title: 'Driver location',
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 14,
-          fillColor: '#c8954a',
-          fillOpacity: 1,
-          strokeColor: '#fff',
-          strokeWeight: 3,
-        },
-      });
+      marker = L.marker([lat, lng], { icon: driverIcon }).addTo(map);
+
+      // Hide "no GPS" placeholder
+      const noGps = document.getElementById('no-gps');
+      if (noGps) noGps.classList.add('hidden');
     }
 
-    function updateMapMarker(lat, lng) {
-      if (!map || !marker) { initMap(lat, lng); return; }
-      const pos = { lat, lng };
-      marker.setPosition(pos);
-      map.panTo(pos);
+    function moveMarker(lat, lng) {
+      if (!map || !marker) {
+        initLeaflet(lat, lng);
+        return;
+      }
+      marker.setLatLng([lat, lng]);
+      map.panTo([lat, lng], { animate: true, duration: 1 });
     }
 
-    // ── Polling ───────────────────────────────────────────────────────────
+    // ── Poll location API ────────────────────────────────────────────────
     async function poll() {
       try {
         const res = await fetch(`/api/location/read?t=${trackToken}`);
         if (!res.ok) return;
         const data = await res.json();
 
-        // Update status
+        // Update status bar
         const icon = STATUS_ICONS[data.status] ?? '📍';
         document.getElementById('status-icon').textContent = icon;
         document.getElementById('status-text').textContent = isZh ? data.statusZh : data.statusEn;
 
         if (data.driverName) {
-          document.getElementById('driver-info').textContent = `${data.driverName} · ${data.vehicleLabel ?? ''}`;
+          document.getElementById('driver-info').textContent =
+            `${data.driverName}${data.vehicleLabel ? ' · ' + data.vehicleLabel : ''}`;
         }
 
+        // Update pulse dot and timestamp
+        const dot = document.getElementById('pulse-dot');
+        const updateTxt = document.getElementById('update-text');
         if (data.lat && data.lng) {
-          updateMapMarker(data.lat, data.lng);
           const secs = Math.round((Date.now() - new Date(data.lastUpdated).getTime()) / 1000);
-          document.getElementById('update-info').textContent =
-            isZh ? `GPS 更新于 ${secs} 秒前` : `GPS updated ${secs}s ago`;
+          const stale = secs > 60;
+          dot.className = 'pulse' + (stale ? ' stale' : ' active');
+          updateTxt.textContent = isZh
+            ? `GPS 更新于 ${secs} 秒前`
+            : `GPS updated ${secs}s ago`;
+          moveMarker(data.lat, data.lng);
         }
 
-        // Stop polling when complete
         if (data.status === 'complete') {
           clearInterval(pollTimer);
-          document.getElementById('update-info').textContent =
-            isZh ? '服务已完成' : 'Job complete';
+          dot.className = 'pulse stale';
+          updateTxt.textContent = isZh ? '服务已完成' : 'Job complete';
         }
-      } catch {
-        // silent — will retry on next poll
-      }
+      } catch { /* silent retry */ }
     }
 
     // ── Boot ─────────────────────────────────────────────────────────────
-    if (initialLat && initialLng) {
-      // Map API may not be loaded yet — wait for it
-      if (hasMapsKey) {
-        window.addEventListener('load', () => initMap(initialLat, initialLng));
+    window.addEventListener('load', () => {
+      if (initialLat && initialLng) {
+        initLeaflet(initialLat, initialLng);
+        document.getElementById('pulse-dot').classList.add('active');
       }
-    }
-
-    if (!isComplete) {
-      poll(); // immediate first poll
-      pollTimer = setInterval(poll, POLL_INTERVAL);
-    }
+      if (!isComplete) {
+        poll();
+        pollTimer = setInterval(poll, POLL_MS);
+      }
+    });
   </script>
 </body>
 </html>

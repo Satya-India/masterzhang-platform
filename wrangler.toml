@@ -15,8 +15,8 @@ pages_build_output_dir = "./dist"
 PUBLIC_SITE_URL = "https://masterzhang.ca"
 PUBLIC_BUSINESS_PHONE = "+14168463253"
 PUBLIC_SERVICE_REGION = "Markham & York Region, ON"
-# Paste your Google Maps JS API key here once created (restrict to HTTP referrers).
-PUBLIC_GOOGLE_MAPS_KEY = ""
+# Google Maps key not needed — using free Leaflet + OpenStreetMap instead
+# PUBLIC_GOOGLE_MAPS_KEY = ""
 
 # ---------------------------------------------------------------------------
 # KV Namespaces
