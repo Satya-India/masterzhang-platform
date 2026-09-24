@@ -25,7 +25,7 @@ const glyphs: Record<string, string> = {
 
 <section id="services" class="relative border-b border-ink-800/60 py-24" aria-labelledby="services-heading">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="max-w-2xl">
+    <div class="max-w-2xl" data-reveal>
       <p class="text-xs font-semibold uppercase tracking-[0.25em] text-copper-400">{t.services.eyebrow}</p>
       <h2 id="services-heading" class="font-expanded mt-4 text-3xl font-bold text-ink-100 sm:text-5xl">
         {t.services.title}
@@ -34,7 +34,7 @@ const glyphs: Record<string, string> = {
     </div>
 
     <!-- 4 equal cards: 1 col mobile → 2 col tablet → 4 col desktop -->
-    <div class="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4" data-stagger>
       {
         t.services.items.map((s) => (
           <article class="edge-glow edge-glow-hover group relative flex flex-col rounded-2xl border border-ink-700/60 bg-gradient-to-b from-ink-850 to-ink-900 p-7">
@@ -61,3 +61,4 @@ const glyphs: Record<string, string> = {
     </div>
   </div>
 </section>
+

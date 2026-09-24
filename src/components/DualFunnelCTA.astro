@@ -13,7 +13,7 @@ const base = locale === 'zh' ? '/zh' : '';
 <section class="py-24" aria-label="Get started">
   <div class="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
     <!-- Residential funnel -->
-    <div class="edge-glow edge-glow-hover grain relative overflow-hidden rounded-3xl border border-copper-500/30 bg-gradient-to-br from-copper-600/15 via-ink-900 to-ink-900 p-9">
+    <div class="edge-glow edge-glow-hover grain relative overflow-hidden rounded-3xl border border-copper-500/30 bg-gradient-to-br from-copper-600/15 via-ink-900 to-ink-900 p-9" data-reveal="left">
       <p class="text-xs font-semibold uppercase tracking-[0.25em] text-copper-300">{t.residentialTitle}</p>
       <h2 class="font-expanded mt-4 text-2xl font-bold text-ink-100 sm:text-3xl">{t.residentialCta}</h2>
       <p class="mt-4 max-w-md text-ink-300">{t.residentialBody}</p>
@@ -29,7 +29,7 @@ const base = locale === 'zh' ? '/zh' : '';
     </div>
 
     <!-- Commercial funnel -->
-    <div class="edge-glow edge-glow-hover relative overflow-hidden rounded-3xl border border-ink-600/60 bg-ink-900 p-9">
+    <div class="edge-glow edge-glow-hover relative overflow-hidden rounded-3xl border border-ink-600/60 bg-ink-900 p-9" data-reveal="right">
       <div class="blueprint absolute inset-0 opacity-40" aria-hidden="true"></div>
       <div class="relative">
         <p class="text-xs font-semibold uppercase tracking-[0.25em] text-ink-400">{t.commercialTitle}</p>
@@ -49,3 +49,4 @@ const base = locale === 'zh' ? '/zh' : '';
     </div>
   </div>
 </section>
+

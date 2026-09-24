@@ -47,9 +47,64 @@ const otherHref = locale === 'zh' ? (path.replace('/zh', '') || '/') : `/zh${pat
     </main>
     <Footer locale={locale} />
 
-    <script>
-      // Simple page-scope enhancement: preload next route on nav hover
-      // (Astro handles this natively with the `<link rel="prefetch">` we emit below).
+    <script is:inline>
+      (function () {
+        /* ── Skip if user prefers reduced motion ── */
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        /* ── Scroll Reveal (data-reveal / data-stagger) ── */
+        var revealIo = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (!entry.isIntersecting) return;
+              var el = entry.target;
+              /* Apply stagger delays to children before revealing */
+              if (el.hasAttribute('data-stagger')) {
+                Array.from(el.children).forEach(function (child, i) {
+                  child.style.transitionDelay = i * 75 + 'ms';
+                });
+              }
+              el.classList.add('revealed');
+              revealIo.unobserve(el);
+            });
+          },
+          { threshold: 0.08, rootMargin: '0px 0px -52px 0px' }
+        );
+        document.querySelectorAll('[data-reveal], [data-stagger]').forEach(function (el) {
+          revealIo.observe(el);
+        });
+
+        /* ── Count-up (data-countup="940" data-suffix="+" data-prefix="") ── */
+        function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+
+        var countIo = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (!entry.isIntersecting) return;
+              var el = entry.target;
+              var target = parseFloat(el.dataset.countup || '0');
+              var suffix = el.dataset.suffix || '';
+              var prefix = el.dataset.prefix || '';
+              var isFloat = el.dataset.countup.indexOf('.') !== -1;
+              var duration = 1400;
+              var start = performance.now();
+
+              function tick(now) {
+                var progress = Math.min((now - start) / duration, 1);
+                var val = target * easeOut(progress);
+                el.textContent = prefix + (isFloat ? val.toFixed(1) : Math.round(val)) + suffix;
+                if (progress < 1) requestAnimationFrame(tick);
+              }
+              requestAnimationFrame(tick);
+              countIo.unobserve(el);
+            });
+          },
+          { threshold: 0.6 }
+        );
+        document.querySelectorAll('[data-countup]').forEach(function (el) {
+          countIo.observe(el);
+        });
+      })();
     </script>
   </body>
 </html>

@@ -69,12 +69,22 @@ const base = locale === 'zh' ? '/zh' : '';
     <!-- Stats -->
     <dl class="mt-14 grid grid-cols-1 gap-6 border-t border-ink-800/70 pt-8 sm:grid-cols-3">
       {
-        t.hero.stats.map((s, i) => (
-          <div class="animate-rise" style={`animation-delay: ${0.4 + i * 0.08}s;`}>
-            <dt class="order-2 text-sm text-ink-400">{s.l}</dt>
-            <dd class="font-expanded order-1 text-3xl font-bold text-copper-300">{s.v}</dd>
-          </div>
-        ))
+        t.hero.stats.map((s, i) => {
+          const num = parseFloat(s.v.replace(/[^0-9.]/g, ''));
+          const suffix = s.v.replace(/^[0-9.]+/, '');
+          return (
+            <div class="animate-rise" style={`animation-delay: ${0.4 + i * 0.08}s;`}>
+              <dt class="order-2 text-sm text-ink-400">{s.l}</dt>
+              <dd
+                class="font-expanded order-1 text-3xl font-bold text-copper-300"
+                data-countup={String(num)}
+                data-suffix={suffix}
+              >
+                {s.v}
+              </dd>
+            </div>
+          );
+        })
       }
     </dl>
   </div>
