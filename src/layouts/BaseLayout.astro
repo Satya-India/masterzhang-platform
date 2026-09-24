@@ -85,14 +85,15 @@ const otherHref = locale === 'zh' ? (path.replace('/zh', '') || '/') : `/zh${pat
               var target = parseFloat(el.dataset.countup || '0');
               var suffix = el.dataset.suffix || '';
               var prefix = el.dataset.prefix || '';
-              var isFloat = el.dataset.countup.indexOf('.') !== -1;
+              var isFloat = (el.dataset.countup || '').indexOf('.') !== -1;
               var duration = 1400;
               var start = performance.now();
 
               function tick(now) {
                 var progress = Math.min((now - start) / duration, 1);
                 var val = target * easeOut(progress);
-                el.textContent = prefix + (isFloat ? val.toFixed(1) : Math.round(val)) + suffix;
+                var numStr = isFloat ? val.toFixed(1) : Math.round(val).toLocaleString('en-CA');
+                el.textContent = prefix + numStr + suffix;
                 if (progress < 1) requestAnimationFrame(tick);
               }
               requestAnimationFrame(tick);
@@ -101,6 +102,7 @@ const otherHref = locale === 'zh' ? (path.replace('/zh', '') || '/') : `/zh${pat
           },
           { threshold: 0.6 }
         );
+
         document.querySelectorAll('[data-countup]').forEach(function (el) {
           countIo.observe(el);
         });
