@@ -11,17 +11,17 @@ const t = getDict(locale).estimator;
 
 /** Server-side ballpark math — single source of truth, mirrored by the API. */
 const RANGES: Record<string, Record<string, [number, number]>> = {
-  moving: { '1': [395, 480], '2': [560, 680], '3': [720, 880], '4': [880, 1150] },
-  cleaning: { '1': [260, 320], '2': [345, 420], '3': [430, 530], '4': [530, 700] },
-  junk: { '0.25': [255, 310], '0.5': [430, 520], '1': [880, 1050], '2': [1750, 2100] },
-  snow: { small: [420, 560], medium: [560, 780], large: [780, 1020] },
+  moving:  { '1': [395, 480], '2': [560, 680], '3': [720, 880], '4': [880, 1150] },
+  cleanup: { '1': [350, 450], '2': [460, 600], '3': [580, 760], '4': [740, 980] },
+  snow:    { small: [420, 560], medium: [560, 780], large: [780, 1020] },
+  yard:    { small: [250, 340], medium: [340, 480], large: [480, 720] },
 };
 
 const OPTION_SETS: Record<string, string[]> = {
-  moving: 'movingOptions',
-  cleaning: 'cleaningOptions',
-  junk: 'junkOptions',
-  snow: 'snowOptions',
+  moving:  'movingOptions',
+  cleanup: 'cleanupOptions',
+  snow:    'snowOptions',
+  yard:    'yardOptions',
 };
 
 const fmt = (n: number) => `$${Math.round(n).toLocaleString('en-CA')}`;
@@ -84,7 +84,7 @@ const steps = [
           <legend class="text-sm font-semibold uppercase tracking-wider text-ink-300">{t.chooseService}</legend>
           <div class="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
             {
-              (['moving', 'cleaning', 'junk', 'snow'] as const).map((id) => (
+              (['moving', 'cleanup', 'snow', 'yard'] as const).map((id) => (
                 <button
                   type="button"
                   class="flex flex-col items-start gap-3 rounded-xl border border-ink-600/70 bg-ink-900 p-4 text-left transition-all hover:border-copper-500/70"
@@ -94,10 +94,10 @@ const steps = [
                 >
                   <span class="grid size-9 place-items-center rounded-lg bg-ink-950 text-copper-400">
                     <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      {id === 'moving' && <path d="M3 7h11v9H3zM14 10h3.5l2.5 2.5V16h-6v-6z" />}
-                      {id === 'cleaning' && <path d="M12 3v6m0 0-5 5a3.5 3.5 0 0 0 5 5l5-5-5-5z" />}
-                      {id === 'junk' && <path d="M4 8h16l-1.5 11a2 2 0 0 1-2 1.8h-9A2 2 0 0 1 5.5 19L4 8zm4 0V6a4 4 0 0 1 8 0v2" />}
-                      {id === 'snow' && <path d="M12 2v20M4 6l16 12M20 6 4 18" />}
+                      {id === 'moving'  && <path d="M3 7h11v9H3zM14 10h3.5l2.5 2.5V16h-6v-6z" />}
+                      {id === 'cleanup' && <path d="M12 3v6m0 0-5 5a3.5 3.5 0 0 0 5 5l5-5-5-5zM4 21h16" />}
+                      {id === 'snow'    && <path d="M12 2v20M4 6l16 12M20 6 4 18" />}
+                      {id === 'yard'    && <path d="M12 21V9m0 0c0-3 2-5.5 5-6-.4 3-2 5-5 6zm0 0c0-3-2-5.5-5-6 .4 3 2 5 5 6z" />}
                     </svg>
                   </span>
                   <span class="text-sm font-semibold text-ink-100">{t.services[id]}</span>
@@ -179,7 +179,20 @@ const steps = [
           </button>
         </div>
 
+        <!-- Inline error feedback — was missing in original, causing silent JS crash -->
+        <p class="step-error mt-4 hidden text-center text-sm font-medium text-red-400" role="alert" aria-live="polite"></p>
+
     </div>
+
+    <!-- Client-side i18n strings — avoids JS crash when accessing t.submitting / t.errors -->
+    <script type="application/json" id="estimator-i18n">{JSON.stringify({ t: {
+      selectService: t.selectService,
+      selectVolume: t.selectVolume,
+      submitting: t.submitting,
+      submit: t.submit,
+      another: t.another,
+      errors: t.errors,
+    } })}</script>
 
       <!-- Footer: live range + nav -->
       <div class="flex flex-col gap-4 border-t border-ink-700/60 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-9">

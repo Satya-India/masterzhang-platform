@@ -13,7 +13,7 @@ pages_build_output_dir = "./dist"
 # Non-secret environment variables (available at build AND runtime).
 [vars]
 PUBLIC_SITE_URL = "https://masterzhang.ca"
-PUBLIC_BUSINESS_PHONE = "+19055550148"
+PUBLIC_BUSINESS_PHONE = "+14168463253"
 PUBLIC_SERVICE_REGION = "Markham & York Region, ON"
 
 # ---------------------------------------------------------------------------

@@ -33,15 +33,15 @@ const FSAS = [
 ];
 const CITIES = ['Markham', 'Richmond Hill', 'Vaughan', 'Thornhill', 'Unionville'];
 
+/* 4-service offer catalog */
 const offerCatalog = {
   '@type': 'OfferCatalog',
   name: 'Property Care Services',
   itemListElement: [
-    'Residential & Office Moving|395',
-    'Move-in / Move-out Deep Cleaning|260',
-    'Junk Removal & Estate Clear-outs|275',
-    'Seasonal Yard Care & Maintenance|250',
-    'Commercial & Residential Snow Clearing and Salting|480',
+    'Moving Help|395',
+    'Move-In / Move-Out Clean & Junk Removal|350',
+    'Snow Clearing & Salting|420',
+    'Yard & Garden Care|250',
   ].map((entry) => {
     const [serviceType, price] = entry.split('|');
     return {
@@ -64,25 +64,92 @@ const offerCatalog = {
   }),
 };
 
+/* Website schema — signals bilingual content and publisher identity */
+const websiteSchema = {
+  '@type': 'WebSite',
+  '@id': `${site.href}#website`,
+  url: site.href,
+  name: SITE.name,
+  alternateName: SITE.nameZh,
+  inLanguage: ['en-CA', 'zh-CN'],
+  publisher: { '@id': `${site.href}#business` },
+};
+
+/* FAQ schema — improves rich results for common local service questions */
+const faqSchema = {
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'What areas does Master Zhang serve?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'We serve all of York Region, Ontario — including Markham, Richmond Hill, Vaughan, Thornhill and Unionville — with sub-90-minute emergency response from our Markham dispatch hub.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How much does local moving cost in Markham?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Moving Help starts from $395 for a 1-bedroom. Get an instant ballpark range in 60 seconds on our website — no email required, price appears before you share contact details.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Do you offer move-out cleaning and junk removal together?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Yes. Our Move-In / Move-Out Clean & Junk Removal service covers both in one booking, starting from $350. Deep clean every room and haul away all junk — no need to hire two companies.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How quickly do you respond for snow clearing?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Snow clearing is triggered within 24 hours of every snowfall. Seasonal driveway contracts start from $420 and include salting and ice management.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Do you serve Chinese-speaking customers? 你们提供中文服务吗？',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Yes — our website and dispatch team are fully bilingual in English and Simplified Chinese (简体中文). Call or estimate online in either language.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What payment methods do you accept?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'We accept cash, credit card, Interac e-transfer and invoice billing for commercial accounts.',
+      },
+    },
+  ],
+};
+
 const mainSchema = {
   '@context': 'https://schema.org',
   '@graph': [
+    websiteSchema,
     {
       '@type': ['MovingCompany', 'HomeAndConstructionBusiness', 'LocalBusiness'],
       '@id': `${site.href}#business`,
       name: siteName,
-      alternateName: '张师傅',
+      alternateName: ['张师傅', 'Master Zhang', '张师傅·搬运清洁物业维护'],
       url: site.href,
       image: ogImageAbs,
       logo: new URL('/favicon.svg', site).href,
-      telephone: SITE.phoneHref,
+      telephone: SITE.phone,
       email: SITE.email,
       priceRange: '$$',
       currenciesAccepted: 'CAD',
       paymentAccepted: 'Cash, Credit Card, E-Transfer, Invoice',
       address: {
         '@type': 'PostalAddress',
-        streetAddress: SITE.address.street,
+        ...(SITE.address.street ? { streetAddress: SITE.address.street } : {}),
         addressLocality: SITE.address.city,
         addressRegion: SITE.address.region,
         postalCode: SITE.address.postal,
@@ -128,6 +195,7 @@ const mainSchema = {
       },
       hasOfferCatalog: offerCatalog,
     },
+    faqSchema,
     ...extraSchema,
   ],
 };
@@ -137,6 +205,19 @@ const mainSchema = {
 <meta name="description" content={description} />
 <link rel="canonical" href={canonical} />
 {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+<!-- Keywords: helps Bing, Baidu and topic-relevance signals -->
+<meta name="keywords" content={
+  locale === 'zh'
+    ? '万锦搬家, 约克区铲雪, 入住清洁, 垃圾清运万锦, 庭院维护, 张师傅, Markham搬家公司'
+    : 'moving company Markham, snow removal York Region, move-in cleaning Markham, junk removal Markham, yard care Markham, 张师傅, Master Zhang'
+} />
+
+<!-- Geo signals for local SEO -->
+<meta name="geo.region" content="CA-ON" />
+<meta name="geo.placename" content="Markham, Ontario, Canada" />
+<meta name="geo.position" content="43.8561;-79.337" />
+<meta name="ICBM" content="43.8561, -79.337" />
 
 <!-- OpenGraph -->
 <meta property="og:type" content="website" />

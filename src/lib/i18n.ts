@@ -8,15 +8,16 @@ export const LOCALES: { code: Locale; label: string; htmlLang: string }[] = [
 export const SITE = {
   name: 'Master Zhang Property Care',
   nameZh: '张师傅 · 搬运清洁物业维护',
-  phone: '+1 (905) 555-0148',
-  phoneHref: '+19055550148',
+  phone: '+1 (416) 846-3253',
+  phoneHref: '+14168463253',
   email: 'hello@masterzhang.ca',
   rfpEmail: 'rfp@masterzhang.ca',
   address: {
-    street: '18 Commerce Valley Dr E, Unit 210',
+    /** Street address — leave empty until a physical office address is confirmed. */
+    street: '',
     city: 'Markham',
     region: 'ON',
-    postal: 'L3T 7X3',
+    postal: 'L3S 1K8',
     country: 'CA',
   },
   hours: 'Mon–Sat 07:00–21:00 · Sun 08:00–18:00',
@@ -41,8 +42,8 @@ export const en = {
   hero: {
     eyebrow: 'Licensed · Insured · Markham & York Region',
     titleA: 'One crew for the move,',
-    titleB: 'the mess, and the seasons.',
-    sub: 'Residential moving, turnover deep-cleaning, junk removal, yard care and commercial snow clearing — dispatched from Markham, delivered on time, every time.',
+    titleB: 'the clean, and the seasons.',
+    sub: 'Residential moving, move-in/move-out cleaning & junk removal, snow clearing and yard care — dispatched from Markham, delivered on time, every time.',
     ctaPrimary: 'Instant Residential Estimate',
     ctaSecondary: 'Commercial RFP / Vendor Account',
     stats: [
@@ -58,39 +59,33 @@ export const en = {
     ontime: '100% On-Time Guarantee',
   },
   services: {
-    eyebrow: 'Five verticals. One accountable crew.',
+    eyebrow: 'Four verticals. One accountable crew.',
     title: 'Full-cycle property care',
     sub: 'From the day you get keys to the day you hand them over — and every season in between.',
     items: [
       {
         id: 'moving',
-        title: 'Residential & Office Moving',
-        desc: 'Padded box-truck moves with blanket-wrap, disassembly and placement. Condos, detached homes, and office relocations.',
+        title: 'Moving Help',
+        desc: 'Full-service local moves and labour-only help. We wrap, carry, load, drive and place everything where you want it. Apartments, condos, houses and offices.',
         price: 'From $395',
       },
       {
-        id: 'cleaning',
-        title: 'Turnover Deep Cleaning',
-        desc: 'Move-in / move-out deep cleans that pass landlord and board inspections — appliances, fixtures, grout, and interiors.',
-        price: 'From $260',
-      },
-      {
-        id: 'junk',
-        title: 'Junk & Estate Clear-outs',
-        desc: 'Pickup + dump trailer teams for basements, estates, and renovation debris. Sweep-clean when we leave.',
-        price: 'From $275',
-      },
-      {
-        id: 'yard',
-        title: 'Seasonal Yard Care',
-        desc: 'Spring open-ups, fall leaf evacuation, hedge and bed care. Subscription plans available.',
-        price: 'From $250',
+        id: 'cleanup',
+        title: 'Move-In / Move-Out Clean & Junk Removal',
+        desc: 'One booking covers the full turnover — deep clean every room, haul away the junk, and leave the unit ready for inspection or new keys.',
+        price: 'From $350',
       },
       {
         id: 'snow',
         title: 'Snow Clearing & Salting',
-        desc: '24-hour trigger service for driveways, walkways, and commercial lots. Salting & ice management included.',
-        price: 'From $480/season',
+        desc: '24-hour trigger service after every snowfall. Driveways, walkways, and commercial lots cleared and salted before you need them.',
+        price: 'From $420/season',
+      },
+      {
+        id: 'yard',
+        title: 'Yard & Garden Care',
+        desc: 'Spring clean-ups, fall leaf removal, lawn mowing, hedge and bed trimming. Subscription plans for year-round property maintenance.',
+        price: 'From $250',
       },
     ],
   },
@@ -103,10 +98,10 @@ export const en = {
     chooseVolume: 'Scale of the job',
     contact: 'Where do we send the firm quote?',
     services: {
-      moving: 'Moving',
-      cleaning: 'Deep Clean',
-      junk: 'Junk Removal',
-      snow: 'Snow / Yard',
+      moving: 'Moving Help',
+      cleanup: 'Clean & Junk',
+      snow: 'Snow Clearing',
+      yard: 'Yard & Garden',
     },
     movingOptions: [
       { id: '1', label: '1 bedroom / studio' },
@@ -114,23 +109,23 @@ export const en = {
       { id: '3', label: '3 bedrooms' },
       { id: '4', label: '4+ bedrooms / office' },
     ],
-    cleaningOptions: [
+    cleanupOptions: [
       { id: '1', label: '1 bedroom / studio' },
       { id: '2', label: '2 bedrooms' },
       { id: '3', label: '3 bedrooms' },
-      { id: '4', label: '4+ bedrooms / commercial' },
-    ],
-    junkOptions: [
-      { id: '0.25', label: '¼ dump trailer load' },
-      { id: '0.5', label: '½ dump trailer load' },
-      { id: '1', label: 'Full trailer load' },
-      { id: '2', label: '2+ loads / estate' },
+      { id: '4', label: '4+ bedrooms' },
     ],
     snowOptions: [
       { id: 'small', label: 'Small driveway (1–2 cars)' },
       { id: 'medium', label: 'Double driveway + walkway' },
       { id: 'large', label: 'Large lot / T-intersection' },
       { id: 'commercial', label: 'Commercial plaza / condo' },
+    ],
+    yardOptions: [
+      { id: 'small', label: 'Small yard (under 4,000 sq ft)' },
+      { id: 'medium', label: 'Medium yard (4,000–8,000 sq ft)' },
+      { id: 'large', label: 'Large yard / estate' },
+      { id: 'plan', label: 'Annual maintenance plan' },
     ],
     volumeLabel: 'Select size',
     postalLabel: 'Postal code',
@@ -213,7 +208,7 @@ export const en = {
     contactTitle: 'Dispatch',
     hoursLabel: 'Hours',
     rights: 'All rights reserved.',
-    licensed: 'Fully licensed & insured · CVOR #00000000',
+    licensed: 'Fully licensed & insured · CVOR Certified Fleet',
   },
 } as const;
 
@@ -227,4 +222,3 @@ export const dict: Record<Locale, Dict> = { en, zh };
 export function getDict(locale: string | undefined): Dict {
   return locale === 'zh' ? zh : en;
 }
-

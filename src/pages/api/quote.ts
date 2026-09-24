@@ -7,13 +7,15 @@ import { z } from 'zod';
 /* Schema — mirrors the estimator's server-side pricing table          */
 /* ------------------------------------------------------------------ */
 
-const SERVICES = ['moving', 'cleaning', 'junk', 'snow'] as const;
+const SERVICES = ['moving', 'cleanup', 'snow', 'yard'] as const;
 
 const VOLUMES: Record<(typeof SERVICES)[number], string[]> = {
   moving: ['1', '2', '3', '4'],
-  cleaning: ['1', '2', '3', '4'],
-  junk: ['0.25', '0.5', '1', '2'],
+  /** cleanup = combined move-in/move-out clean + junk haul-away, priced by bedroom */
+  cleanup: ['1', '2', '3', '4'],
   snow: ['small', 'medium', 'large', 'commercial'],
+  /** yard: 'plan' returns null (custom proposal) */
+  yard: ['small', 'medium', 'large', 'plan'],
 };
 
 /** York Region FSAs (Markham, Richmond Hill, Vaughan, Thornhill, Unionville) */
@@ -45,10 +47,12 @@ const quoteSchema = z.object({
 /** Re-derive the ballpark on the server — never trust client-computed prices. */
 function ballpark(service: string, volume: string): [number, number] | null {
   const R: Record<string, Record<string, [number, number]>> = {
-    moving: { '1': [395, 480], '2': [560, 680], '3': [720, 880], '4': [880, 1150] },
-    cleaning: { '1': [260, 320], '2': [345, 420], '3': [430, 530], '4': [530, 700] },
-    junk: { '0.25': [255, 310], '0.5': [430, 520], '1': [880, 1050], '2': [1750, 2100] },
-    snow: { small: [420, 560], medium: [560, 780], large: [780, 1020] },
+    moving:  { '1': [395, 480], '2': [560, 680], '3': [720, 880], '4': [880, 1150] },
+    /** cleanup = move-in/out deep clean + junk haul-away combined, priced by bedroom count */
+    cleanup: { '1': [350, 450], '2': [460, 600], '3': [580, 760], '4': [740, 980] },
+    snow:    { small: [420, 560], medium: [560, 780], large: [780, 1020] },
+    /** yard 'plan' (annual contract) → no price chip, returns null → "Custom proposal" */
+    yard:    { small: [250, 340], medium: [340, 480], large: [480, 720] },
   };
   return R[service]?.[volume] ?? null;
 }

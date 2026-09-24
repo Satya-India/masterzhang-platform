@@ -11,10 +11,9 @@ const year = new Date().getFullYear();
 
 const serviceLinks = [
   { key: 'moving', href: '/#services' },
-  { key: 'cleaning', href: '/#services' },
-  { key: 'junk', href: '/#services' },
-  { key: 'yard', href: '/#services' },
+  { key: 'cleanup', href: '/#services' },
   { key: 'snow', href: '/#services' },
+  { key: 'yard', href: '/#services' },
 ];
 
 const areaLinks = [
@@ -78,7 +77,7 @@ const areaLinks = [
           <a class="transition-colors hover:text-copper-300" href={`mailto:${SITE.email}`}>{SITE.email}</a>
         </li>
         <li class="text-ink-500">
-          {SITE.address.street}, {SITE.address.city}, {SITE.address.region} {SITE.address.postal}
+          {SITE.address.street ? `${SITE.address.street}, ` : ''}{SITE.address.city}, {SITE.address.region} {SITE.address.postal}
         </li>
         <li class="text-ink-500">
           {t.footer.hoursLabel}: {SITE.hours}
