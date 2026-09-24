@@ -21,9 +21,6 @@ PUBLIC_SERVICE_REGION = "Markham & York Region, ON"
 # ---------------------------------------------------------------------------
 # KV Namespaces
 # ---------------------------------------------------------------------------
-[[kv_namespaces]]
-binding = "SESSION"
-id = "36b9aba3d9174050a93a23af1a1e7f40"
 
 [[kv_namespaces]]
 # Job tracking data: driver location, status, tokens
