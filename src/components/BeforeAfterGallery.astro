@@ -15,22 +15,28 @@ const uid = 'ba-' + Math.random().toString(36).slice(2, 8);
 /* Real before & after transformation cases with matching photography */
 const scenes = [
   {
-    beforeImg: '/gallery/estate-before.jpg',
-    afterImg: '/gallery/estate-after.jpg',
+    beforeWebp: '/gallery/estate-before.webp',
+    afterWebp: '/gallery/estate-after.webp',
+    beforeJpg: '/gallery/estate-before.jpg',
+    afterJpg: '/gallery/estate-after.jpg',
     beforeLabel: t.cases[0].before,
     afterLabel: t.cases[0].after,
     title: t.cases[0].title,
   },
   {
-    beforeImg: '/gallery/reno-before.jpg',
-    afterImg: '/gallery/reno-after.jpg',
+    beforeWebp: '/gallery/reno-before.webp',
+    afterWebp: '/gallery/reno-after.webp',
+    beforeJpg: '/gallery/reno-before.jpg',
+    afterJpg: '/gallery/reno-after.jpg',
     beforeLabel: t.cases[1].before,
     afterLabel: t.cases[1].after,
     title: t.cases[1].title,
   },
   {
-    beforeImg: '/gallery/snow-before.jpg',
-    afterImg: '/gallery/snow-after.jpg',
+    beforeWebp: '/gallery/snow-before.webp',
+    afterWebp: '/gallery/snow-after.webp',
+    beforeJpg: '/gallery/snow-before.jpg',
+    afterJpg: '/gallery/snow-after.jpg',
     beforeLabel: t.cases[2].before,
     afterLabel: t.cases[2].after,
     title: t.cases[2].title,
@@ -53,12 +59,18 @@ const scenes = [
             <div class="relative aspect-[16/10] overflow-hidden select-none" data-before-after>
               <!-- AFTER (base layer) -->
               <div class="absolute inset-0">
-                <img
-                  src={s.afterImg}
-                  alt={`${s.title} — ${s.afterLabel}`}
-                  class="h-full w-full object-cover"
-                  loading="lazy"
-                />
+                <picture>
+                  <source srcset={s.afterWebp} type="image/webp" />
+                  <img
+                    src={s.afterJpg}
+                    alt={`${s.title} — ${s.afterLabel}`}
+                    class="h-full w-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                    width="1376"
+                    height="768"
+                  />
+                </picture>
                 <span class="absolute bottom-3 right-3 rounded-lg bg-ink-950/85 backdrop-blur-md px-3 py-1 text-xs font-bold text-copper-300 border border-copper-500/30 shadow-md">
                   {s.afterLabel}
                 </span>
@@ -66,16 +78,23 @@ const scenes = [
 
               <!-- BEFORE (clipped layer) -->
               <div class="absolute inset-0" data-before-layer>
-                <img
-                  src={s.beforeImg}
-                  alt={`${s.title} — ${s.beforeLabel}`}
-                  class="h-full w-full object-cover"
-                  loading="lazy"
-                />
+                <picture>
+                  <source srcset={s.beforeWebp} type="image/webp" />
+                  <img
+                    src={s.beforeJpg}
+                    alt={`${s.title} — ${s.beforeLabel}`}
+                    class="h-full w-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                    width="1376"
+                    height="768"
+                  />
+                </picture>
                 <span class="absolute bottom-3 left-3 rounded-lg bg-ink-950/85 backdrop-blur-md px-3 py-1 text-xs font-bold text-ink-200 border border-ink-700 shadow-md">
                   {s.beforeLabel}
                 </span>
               </div>
+
 
               <!-- Draggable Handle with visual pill button -->
               <div
