@@ -202,7 +202,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'quotes@nexuscare.ca',
+          // TODO: change to 'quotes@nexuscare.ca' once nexuscare.ca is verified in Resend dashboard
+          from: 'Nexus Care Quotes <onboarding@resend.dev>',
           to: [env.QUOTE_DESTINATION_EMAIL],
           subject: `[${payload.id}] ${q.service} quote — ${q.postalCode}${inRegion ? '' : ' (OUT OF REGION)'}`,
           text: [
