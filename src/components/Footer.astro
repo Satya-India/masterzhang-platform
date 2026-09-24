@@ -10,83 +10,236 @@ const t = getDict(locale);
 const year = new Date().getFullYear();
 
 const serviceLinks = [
-  { key: 'moving', href: '/#services' },
-  { key: 'cleanup', href: '/#services' },
-  { key: 'snow', href: '/#services' },
-  { key: 'yard', href: '/#services' },
+  { key: 'moving', href: '/#services', label: locale === 'zh' ? '专业搬家与货运' : 'Moving Help & Relocation', badge: '16–26ft' },
+  { key: 'cleanup', href: '/#services', label: locale === 'zh' ? '交房深洁与杂物清运' : 'Turnover Clean & Junk Haul', badge: '100% Pass' },
+  { key: 'snow', href: '/#services', label: locale === 'zh' ? '冬季铲雪与撒盐' : 'Snow Clearing & Salting', badge: '24-Hr' },
+  { key: 'yard', href: '/#services', label: locale === 'zh' ? '庭院绿化四季维护' : 'Yard & Seasonal Grounds', badge: 'Seasonal' },
+  { key: 'commercial', href: '/#commercial', label: locale === 'zh' ? '商业物业管理与承包' : 'Commercial Property RFP', badge: 'B2B' },
 ];
 
 const areaLinks = [
-  { name: 'Markham', href: '/locations/markham' },
-  { name: 'Richmond Hill', href: '/locations/richmond-hill' },
-  { name: 'Vaughan', href: '/locations/vaughan' },
-  { name: 'Thornhill', href: '/locations/thornhill' },
-  { name: 'Unionville', href: '/locations/unionville' },
+  { name: 'Markham & Unionville', nameZh: '万锦 & 渔人村', href: '/locations/markham', note: '15 min dispatch' },
+  { name: 'Richmond Hill', nameZh: '列治文山', href: '/locations/richmond-hill', note: '20 min dispatch' },
+  { name: 'Vaughan & Woodbridge', nameZh: '旺市', href: '/locations/vaughan', note: '25 min dispatch' },
+  { name: 'Thornhill & North York', nameZh: '康山 & 北约克', href: '/locations/thornhill', note: '20 min dispatch' },
+  { name: 'Stouffville & Aurora', nameZh: '斯特拉夫维尔 & 奥罗拉', href: '/locations/stouffville', note: '25 min dispatch' },
+];
+
+const trustBadges = [
+  { icon: '🛡️', title: '$5M Commercial General Liability', zh: '$500万商业综合责任保险' },
+  { icon: '🚚', title: 'CVOR Certified Commercial Fleet', zh: '安省 CVOR 认证合规货车车队' },
+  { icon: '👷', title: 'WSIB Ontario Cleared Crew', zh: 'WSIB 员工工伤保障完备' },
+  { icon: '⚡', title: '< 90-Min Emergency Response', zh: '< 90 分钟极速应急调度' },
 ];
 ---
 
-<footer class="border-t border-ink-800 bg-ink-950">
-  <div class="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-4 lg:px-8">
-    <!-- Brand -->
-    <div class="lg:col-span-2">
-      <p class="font-expanded text-lg font-bold text-ink-100">NEXUS CARE</p>
-      <p class="mt-3 max-w-sm text-sm leading-relaxed text-ink-400">{t.footer.tagline}</p>
-      <p class="mt-6 text-xs text-ink-500">{t.footer.licensed}</p>
-    </div>
+<footer class="border-t border-ink-800 bg-ink-950 text-ink-300">
+  <!-- Main Footer Grid -->
+  <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+      
+      <!-- ========================================================= -->
+      <!-- COL 1: Brand & Canadian Accountability                    -->
+      <!-- ========================================================= -->
+      <div class="flex flex-col justify-between">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="flex size-7 items-center justify-center rounded-lg bg-copper-500/20 text-copper-300 font-bold text-sm border border-copper-500/40">
+              🍁
+            </span>
+            <p class="font-expanded text-xl font-black tracking-tight text-ink-100">
+              NEXUS CARE
+            </p>
+          </div>
+          
+          <p class="mt-3.5 text-xs sm:text-sm leading-relaxed text-ink-400">
+            {t.footer.tagline}
+          </p>
 
-    <!-- Services -->
-    <nav aria-label={t.footer.servicesTitle}>
-      <h3 class="text-xs font-bold uppercase tracking-wider text-ink-300">{t.footer.servicesTitle}</h3>
-      <ul class="mt-4 space-y-2.5 text-sm text-ink-400">
-        {
-          serviceLinks.map((s) => (
+          <!-- Trust Badges List -->
+          <ul class="mt-6 space-y-2 border-t border-ink-800/80 pt-5 text-xs text-ink-400">
+            {trustBadges.map((b) => (
+              <li class="flex items-center gap-2">
+                <span class="text-sm">{b.icon}</span>
+                <span class="text-ink-300">{locale === 'zh' ? b.zh : b.title}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div class="mt-6">
+          <span class="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-emerald-400">
+            <span class="size-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            {locale === 'zh' ? '每周7天 准时履约保证' : '100% On-Time Guarantee'}
+          </span>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- COL 2: Full-Cycle Services                                -->
+      <!-- ========================================================= -->
+      <div>
+        <h3 class="font-expanded text-xs font-bold uppercase tracking-wider text-copper-400">
+          {t.footer.servicesTitle}
+        </h3>
+        <ul class="mt-4 space-y-2.5 text-xs sm:text-sm">
+          {serviceLinks.map((s) => (
             <li>
-              <a class="transition-colors hover:text-copper-300" href={localePath(s.href, locale)}>
-                {t.services.items.find((i) => i.id === s.key)?.title}
+              <a
+                href={localePath(s.href, locale)}
+                class="group flex items-center justify-between rounded-lg p-1.5 -ml-1.5 transition-colors hover:bg-ink-900 hover:text-copper-300"
+              >
+                <span>{s.label}</span>
+                <span class="text-[10px] font-medium text-ink-500 group-hover:text-copper-400">
+                  {s.badge}
+                </span>
               </a>
             </li>
-          ))
-        }
-      </ul>
-    </nav>
-
-    <!-- Areas + contact -->
-    <div>
-      <nav aria-label={t.footer.areasTitle}>
-        <h3 class="text-xs font-bold uppercase tracking-wider text-ink-300">{t.footer.areasTitle}</h3>
-        <ul class="mt-4 space-y-2.5 text-sm text-ink-400">
-          {
-            areaLinks.map((a) => (
-              <li>
-                <a class="transition-colors hover:text-copper-300" href={localePath(a.href, locale)}>
-                  {locale === 'zh' ? a.name : a.name}
-                </a>
-              </li>
-            ))
-          }
+          ))}
         </ul>
-      </nav>
-      <h3 class="mt-8 text-xs font-bold uppercase tracking-wider text-ink-300">{t.footer.contactTitle}</h3>
-      <ul class="mt-4 space-y-2.5 text-sm text-ink-400">
-        <li>
-          <a class="transition-colors hover:text-copper-300" href={`tel:${SITE.phoneHref}`}>{SITE.phone}</a>
-        </li>
-        <li>
-          <a class="transition-colors hover:text-copper-300" href={`mailto:${SITE.email}`}>{SITE.email}</a>
-        </li>
-        <li class="text-ink-500">
-          {SITE.address.street ? `${SITE.address.street}, ` : ''}{SITE.address.city}, {SITE.address.region} {SITE.address.postal}
-        </li>
-        <li class="text-ink-500">
-          {t.footer.hoursLabel}: {SITE.hours}
-        </li>
-      </ul>
+
+        <div class="mt-6 rounded-xl border border-ink-800 bg-ink-900/60 p-3 text-xs text-ink-400">
+          <p class="font-semibold text-ink-200">
+            {locale === 'zh' ? '💡 一站式打包折扣' : '💡 Bundled Turnovers'}
+          </p>
+          <p class="mt-1 text-[11px] leading-relaxed text-ink-400">
+            {locale === 'zh' 
+              ? '搬家与交房深度清洁同日预约，立减 $50 CAD。' 
+              : 'Combine Move + Turnover Clean in one booking to save $50 CAD.'}
+          </p>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- COL 3: Service Areas & Route Dispatch                     -->
+      <!-- ========================================================= -->
+      <div>
+        <h3 class="font-expanded text-xs font-bold uppercase tracking-wider text-copper-400">
+          {t.footer.areasTitle}
+        </h3>
+        <ul class="mt-4 space-y-2.5 text-xs sm:text-sm">
+          {areaLinks.map((a) => (
+            <li>
+              <a
+                href={localePath(a.href, locale)}
+                class="group flex items-center justify-between rounded-lg p-1.5 -ml-1.5 transition-colors hover:bg-ink-900 hover:text-copper-300"
+              >
+                <span>{locale === 'zh' ? a.nameZh : a.name}</span>
+                <span class="text-[10px] text-ink-500 group-hover:text-copper-400">
+                  {a.note}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        <div class="mt-6 rounded-xl border border-copper-500/20 bg-copper-500/5 p-3 text-xs">
+          <div class="flex items-center gap-1.5 text-copper-300 font-semibold text-[11px]">
+            <span class="size-1.5 rounded-full bg-copper-400"></span>
+            {locale === 'zh' ? '约克区中心调度站' : 'York Region Dispatch Hub'}
+          </div>
+          <p class="mt-1 text-[11px] text-ink-400">
+            {locale === 'zh' 
+              ? '万锦核心驻点，覆盖万锦、列治文山、旺市及北约克周边。' 
+              : 'Stationed in Markham with sub-90 min response across York Region.'}
+          </p>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- COL 4: Operations & Live Dispatch                         -->
+      <!-- ========================================================= -->
+      <div>
+        <h3 class="font-expanded text-xs font-bold uppercase tracking-wider text-copper-400">
+          {t.footer.contactTitle}
+        </h3>
+
+        <!-- Big Phone Button -->
+        <a
+          href={`tel:${SITE.phoneHref}`}
+          class="mt-4 flex items-center justify-between rounded-xl border border-copper-500/40 bg-gradient-to-r from-copper-500/10 to-ink-900 px-3.5 py-3 transition-all hover:border-copper-400 hover:bg-copper-500/20"
+        >
+          <div class="flex items-center gap-2.5">
+            <span class="flex size-7 items-center justify-center rounded-lg bg-copper-500 text-ink-950 font-bold text-xs">
+              📞
+            </span>
+            <div>
+              <p class="text-[10px] uppercase font-bold tracking-wider text-copper-300">
+                {locale === 'zh' ? '24/7 极速调度电话' : 'Dispatch Hotline'}
+              </p>
+              <p class="font-bold text-ink-100 text-sm">
+                {SITE.phone}
+              </p>
+            </div>
+          </div>
+          <span class="text-xs text-copper-300 font-bold">→</span>
+        </a>
+
+        <!-- Contact details -->
+        <ul class="mt-4 space-y-2 text-xs text-ink-400">
+          <li class="flex items-center gap-2">
+            <span class="text-ink-500">✉️</span>
+            <a href={`mailto:${SITE.email}`} class="transition-colors hover:text-copper-300">
+              {SITE.email}
+            </a>
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="text-ink-500">⏰</span>
+            <span>{t.footer.hoursLabel}: <strong>{SITE.hours}</strong></span>
+          </li>
+          <li class="flex items-center gap-2 text-ink-500">
+            <span>📍</span>
+            <span>Markham, York Region, ON</span>
+          </li>
+        </ul>
+
+        <!-- Live tracking & Dispatcher login buttons -->
+        <div class="mt-5 space-y-2 border-t border-ink-800/80 pt-4">
+          <a
+            href={localePath('/track', locale)}
+            class="flex items-center justify-between rounded-lg border border-ink-700 bg-ink-900/80 px-3 py-2 text-xs font-semibold text-ink-200 transition-colors hover:border-copper-500/50 hover:text-copper-300"
+          >
+            <span class="flex items-center gap-1.5">
+              <span>📍</span>
+              {locale === 'zh' ? '客户手机实时追踪' : 'Live Client Tracking'}
+            </span>
+            <span>→</span>
+          </a>
+          <a
+            href="/admin/login"
+            class="flex items-center justify-between rounded-lg border border-transparent px-3 py-1.5 text-[11px] text-ink-500 transition-colors hover:text-ink-300"
+          >
+            <span>{locale === 'zh' ? '内部调度员系统登录' : 'Staff / Dispatch Portal'}</span>
+            <span>🔒</span>
+          </a>
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <div class="border-t border-ink-800/60">
-    <p class="mx-auto max-w-7xl px-4 py-6 text-xs text-ink-500 sm:px-6 lg:px-8">
-      © {year} {SITE.name}. {t.footer.rights}
-    </p>
+  <!-- Bottom Bar with Canadian Identity -->
+  <div class="border-t border-ink-800/70 bg-ink-950/80">
+    <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-5 sm:flex-row sm:px-6 lg:px-8 text-xs text-ink-500">
+      <div class="flex items-center gap-2">
+        <span class="text-copper-400 font-bold">🍁</span>
+        <span>
+          © {year} {SITE.name}. {t.footer.rights}
+        </span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-4 text-[11px] text-ink-400">
+        <span>🇨🇦 Proudly Canadian Owned & Operated</span>
+        <span class="text-ink-700">·</span>
+        <a href={localePath('/track', locale)} class="hover:text-copper-300 transition-colors">
+          {locale === 'zh' ? '订单追踪' : 'Order Tracking'}
+        </a>
+        <span class="text-ink-700">·</span>
+        <a href="/admin/login" class="hover:text-copper-300 transition-colors">
+          {locale === 'zh' ? '员工入口' : 'Staff Login'}
+        </a>
+      </div>
+    </div>
   </div>
 </footer>
+

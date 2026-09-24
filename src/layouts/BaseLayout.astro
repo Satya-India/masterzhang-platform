@@ -5,6 +5,7 @@ import '@fontsource-variable/instrument-sans';
 import SEO from '@/components/SEO.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
+import CanadianLeavesScroll from '@/components/CanadianLeavesScroll.astro';
 import { LOCALES, type Locale } from '@/lib/i18n';
 
 interface Props {
@@ -45,6 +46,7 @@ const otherHref = locale === 'zh' ? (path.replace('/zh', '') || '/') : `/zh${pat
     <main id="main">
       <slot />
     </main>
+    <CanadianLeavesScroll />
     <Footer locale={locale} />
 
     <script is:inline>

@@ -122,37 +122,43 @@ const statsList = [
               </span>
               {qc.liveStatus}
             </span>
-            <span class="text-[11px] font-medium uppercase tracking-wider text-ink-400">
-              {qc.title}
-            </span>
+            <div class="flex items-center gap-2">
+              <span
+                id="qc-cycle-pill"
+                class="inline-flex items-center gap-1.5 rounded-full bg-copper-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-copper-300 border border-copper-500/25 transition-all duration-300"
+              >
+                <span class="size-1.5 rounded-full bg-copper-400 animate-pulse"></span>
+                <span>{locale === 'zh' ? '自动切换中 (触控暂停)' : 'Auto-preview (touch to stop)'}</span>
+              </span>
+            </div>
           </div>
 
           <!-- Service Tabs -->
           <div class="mt-5 grid grid-cols-4 gap-1.5 rounded-xl bg-ink-950 p-1 border border-ink-800">
             <button
               type="button"
-              class="qc-tab active rounded-lg py-2 text-center text-xs font-bold transition-all text-ink-950 bg-copper-500"
+              class="qc-tab active relative rounded-lg py-2.5 text-center text-xs font-bold transition-all duration-200 text-ink-950 bg-copper-500 shadow-sm"
               data-tab="moving"
             >
               🚛 {qc.tabs.moving}
             </button>
             <button
               type="button"
-              class="qc-tab rounded-lg py-2 text-center text-xs font-bold text-ink-400 transition-all hover:text-ink-200"
+              class="qc-tab relative rounded-lg py-2.5 text-center text-xs font-bold transition-all duration-200 text-ink-400 hover:text-ink-200"
               data-tab="cleanup"
             >
               🧹 {qc.tabs.cleanup}
             </button>
             <button
               type="button"
-              class="qc-tab rounded-lg py-2 text-center text-xs font-bold text-ink-400 transition-all hover:text-ink-200"
+              class="qc-tab relative rounded-lg py-2.5 text-center text-xs font-bold transition-all duration-200 text-ink-400 hover:text-ink-200"
               data-tab="snow"
             >
               ❄️ {qc.tabs.snow}
             </button>
             <button
               type="button"
-              class="qc-tab rounded-lg py-2 text-center text-xs font-bold text-ink-400 transition-all hover:text-ink-200"
+              class="qc-tab relative rounded-lg py-2.5 text-center text-xs font-bold transition-all duration-200 text-ink-400 hover:text-ink-200"
               data-tab="yard"
             >
               🌿 {qc.tabs.yard}
@@ -162,7 +168,7 @@ const statsList = [
           <!-- Dynamic Panel Content -->
           <div class="mt-6">
             <!-- 1. Moving Panel -->
-            <div class="qc-panel" data-panel="moving">
+            <div class="qc-panel qc-panel-animate" data-panel="moving">
               <div class="flex items-baseline justify-between">
                 <span class="text-xs uppercase font-bold tracking-wider text-ink-400">{qc.tabs.moving}</span>
                 <span class="font-expanded text-xl font-bold text-copper-300">{qc.movingPrice}</span>
@@ -246,51 +252,148 @@ const statsList = [
   </div>
 </section>
 
+<style>
+  .qc-panel-animate {
+    animation: qcSlideFade 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes qcSlideFade {
+    0% {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+
 <script>
-  /* Quick Card Interactive Controller */
-  const qcContainer = document.querySelector('[data-quick-card]');
-  if (qcContainer) {
+  /* Quick Card Interactive Controller with 2s Auto-Cycle */
+  (function () {
+    const qcContainer = document.querySelector('[data-quick-card]');
+    if (!qcContainer) return;
+
     let currentService = 'moving';
-    const tabs = qcContainer.querySelectorAll<HTMLButtonElement>('.qc-tab');
-    const panels = qcContainer.querySelectorAll<HTMLElement>('.qc-panel');
+    let currentIndex = 0;
+    const tabs = Array.from(qcContainer.querySelectorAll<HTMLButtonElement>('.qc-tab'));
+    const panels = Array.from(qcContainer.querySelectorAll<HTMLElement>('.qc-panel'));
     const actionBtn = qcContainer.querySelector<HTMLButtonElement>('#qc-action-btn');
+    const cyclePill = qcContainer.querySelector<HTMLElement>('#qc-cycle-pill');
 
-    tabs.forEach((tab) => {
-      tab.addEventListener('click', () => {
-        const target = tab.dataset.tab!;
-        currentService = target;
+    const serviceKeys = ['moving', 'cleanup', 'snow', 'yard'];
+    let isManual = false;
+    let autoTimer: any = null;
 
-        // Update active tab style
-        tabs.forEach((t) => {
-          t.classList.remove('bg-copper-500', 'text-ink-950', 'active');
-          t.classList.add('text-ink-400');
-        });
-        tab.classList.add('bg-copper-500', 'text-ink-950', 'active');
-        tab.classList.remove('text-ink-400');
+    function applyTab(index: number, manual = false) {
+      if (index < 0 || index >= serviceKeys.length) return;
+      currentIndex = index;
+      const target = serviceKeys[index];
+      currentService = target;
 
-        // Switch visible panel
-        panels.forEach((p) => {
-          p.classList.toggle('hidden', p.dataset.panel !== target);
-        });
+      // Update tabs styling
+      tabs.forEach((tab, i) => {
+        const isActive = i === index;
+        tab.classList.toggle('active', isActive);
+        tab.classList.toggle('bg-copper-500', isActive);
+        tab.classList.toggle('text-ink-950', isActive);
+        tab.classList.toggle('shadow-sm', isActive);
+        tab.classList.toggle('text-ink-400', !isActive);
       });
+
+      // Update panels with animation
+      panels.forEach((p) => {
+        const isMatch = p.dataset.panel === target;
+        p.classList.toggle('hidden', !isMatch);
+        if (isMatch) {
+          p.classList.remove('qc-panel-animate');
+          void p.offsetWidth; // Trigger reflow for smooth re-trigger
+          p.classList.add('qc-panel-animate');
+        }
+      });
+
+      if (manual) {
+        stopAutoCycle();
+      }
+    }
+
+    function stopAutoCycle() {
+      if (isManual) return;
+      isManual = true;
+      if (autoTimer) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+      }
+      if (cyclePill) {
+        cyclePill.style.opacity = '0';
+        setTimeout(() => {
+          cyclePill.remove();
+        }, 250);
+      }
+    }
+
+    function startAutoCycle() {
+      if (isManual || autoTimer) return;
+      autoTimer = setInterval(() => {
+        if (isManual) return;
+        const nextIndex = (currentIndex + 1) % serviceKeys.length;
+        applyTab(nextIndex, false);
+      }, 2000); // Cycles every 2 seconds until manually touched
+    }
+
+    // Manual tab interactions (click or touch)
+    tabs.forEach((tab, idx) => {
+      tab.addEventListener('click', (e) => {
+        e.preventDefault();
+        applyTab(idx, true);
+      });
+      tab.addEventListener('touchstart', () => {
+        applyTab(idx, true);
+      }, { passive: true });
     });
 
-    // Action button: smoothly scroll to estimator and select the active service!
+    // Touching or clicking anywhere inside the card stops auto-cycle
+    qcContainer.addEventListener('pointerdown', (e) => {
+      const target = e.target as HTMLElement;
+      if (target && !target.closest('#qc-action-btn')) {
+        stopAutoCycle();
+      }
+    });
+
+    // Desktop hover: pause while hovering, resume on leave unless user clicked/touched
+    qcContainer.addEventListener('mouseenter', () => {
+      if (!isManual && autoTimer) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+      }
+    });
+    qcContainer.addEventListener('mouseleave', () => {
+      if (!isManual && !autoTimer) {
+        startAutoCycle();
+      }
+    });
+
+    // Start auto cycle initially
+    startAutoCycle();
+
+    // Action button: smooth scrolls to estimator and pre-selects current active service
     if (actionBtn) {
       actionBtn.addEventListener('click', () => {
+        stopAutoCycle();
         const estimatorEl = document.querySelector('#estimator');
         if (estimatorEl) {
           estimatorEl.scrollIntoView({ behavior: 'smooth' });
 
-          // Auto-trigger service selection in the estimator
           setTimeout(() => {
-            const svcBtn = document.querySelector<HTMLButtonElement>(`[data-select="service"][data-value="${currentService}"]`);
+            const svcBtn = document.querySelector<HTMLButtonElement>(
+              `[data-select="service"][data-value="${currentService}"]`
+            );
             if (svcBtn) {
               svcBtn.click();
             }
-          }, 400);
+          }, 450);
         }
       });
     }
-  }
+  })();
 </script>
