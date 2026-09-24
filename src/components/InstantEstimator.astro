@@ -9,12 +9,12 @@ interface Props {
 const { locale } = Astro.props;
 const t = getDict(locale).estimator;
 
-/** Server-side ballpark math — single source of truth, mirrored by the API. */
+/** Canadian Market Ballpark Pricing (CAD) */
 const RANGES: Record<string, Record<string, [number, number]>> = {
-  moving:  { '1': [395, 480], '2': [560, 680], '3': [720, 880], '4': [880, 1150] },
-  cleanup: { '1': [350, 450], '2': [460, 600], '3': [580, 760], '4': [740, 980] },
-  snow:    { small: [420, 560], medium: [560, 780], large: [780, 1020] },
-  yard:    { small: [250, 340], medium: [340, 480], large: [480, 720] },
+  moving:  { '1': [395, 480], '2': [560, 680], '3': [720, 880], '4': [950, 1350] },
+  cleanup: { '1': [280, 360], '2': [380, 480], '3': [480, 620], '4': [620, 850] },
+  snow:    { small: [450, 580], medium: [620, 780], large: [820, 1100], commercial: [1200, 2400] },
+  yard:    { small: [190, 260], medium: [280, 390], large: [420, 600], plan: [680, 1200] },
 };
 
 const OPTION_SETS: Record<string, string[]> = {
@@ -36,8 +36,8 @@ const groups = Object.entries(OPTION_SETS).map(([service, key]) => ({
 
 const steps = [
   { n: 1, label: t.chooseService },
-  { n: 2, label: t.chooseVolume },
-  { n: 3, label: t.contact },
+  { n: 2, label: t.step2Title },
+  { n: 3, label: t.step3Title },
 ];
 ---
 
@@ -68,7 +68,7 @@ const steps = [
         errors: t.errors,
       })}
     >
-      <!-- Progress -->
+      <!-- Progress Bar -->
       <ol class="flex items-center gap-2 border-b border-ink-700/60 px-6 py-5 sm:px-9" aria-label="Progress">
         {
           steps.map((s) => (
@@ -87,7 +87,9 @@ const steps = [
       </ol>
 
       <div class="p-6 sm:p-9">
-        <!-- STEP 1: service -->
+        <!-- ============================================================= -->
+        <!-- STEP 1: Service Selection & Primary Scale                     -->
+        <!-- ============================================================= -->
         <fieldset data-step="1">
           <legend class="text-sm font-semibold uppercase tracking-wider text-ink-300">{t.chooseService}</legend>
           <div class="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -113,59 +115,261 @@ const steps = [
               ))
             }
           </div>
+
+          <!-- Volume / Scale selection appears once service is chosen -->
+          <div id="volume-wrapper" class="mt-8 border-t border-ink-800/80 pt-6" hidden>
+            <p class="text-sm font-semibold uppercase tracking-wider text-ink-300">{t.chooseVolume}</p>
+            {
+              groups.map((g) => (
+                <div class="volume-group mt-4 grid gap-3 sm:grid-cols-2" data-group={g.service} hidden>
+                  {g.options.map((o) => (
+                    <button
+                      type="button"
+                      class="flex items-center justify-between gap-3 rounded-xl border border-ink-600/70 bg-ink-900 px-4 py-3.5 text-left transition-all hover:border-copper-500/70"
+                      data-select="volume"
+                      data-value={o.id}
+                      aria-pressed="false"
+                    >
+                      <span class="text-sm font-medium text-ink-100">{o.label}</span>
+                      {o.range && (
+                        <span class="shrink-0 rounded-md bg-copper-500/10 px-2 py-1 text-xs font-bold text-copper-300">{o.range}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              ))
+            }
+          </div>
         </fieldset>
 
-        <!-- STEP 2: volume -->
+        <!-- ============================================================= -->
+        <!-- STEP 2: Smart Canadian Property Details & Add-ons             -->
+        <!-- ============================================================= -->
         <fieldset data-step="2" class="hidden">
-          <legend class="text-sm font-semibold uppercase tracking-wider text-ink-300">{t.chooseVolume}</legend>
-          {
-            groups.map((g) => (
-              <div class="volume-group mt-5 grid gap-3 sm:grid-cols-2" data-group={g.service} hidden>
-                {g.options.map((o) => (
-                  <button
-                    type="button"
-                    class="flex items-center justify-between gap-3 rounded-xl border border-ink-600/70 bg-ink-900 px-4 py-3.5 text-left transition-all hover:border-copper-500/70"
-                    data-select="volume"
-                    data-value={o.id}
-                    aria-pressed="false"
-                  >
-                    <span class="text-sm font-medium text-ink-100">{o.label}</span>
-                    {o.range && (
-                      <span class="shrink-0 rounded-md bg-copper-500/10 px-2 py-1 text-xs font-bold text-copper-300">{o.range}</span>
-                    )}
+          <div class="border-b border-ink-800 pb-4">
+            <h3 class="text-base font-bold text-ink-100">{t.step2Title}</h3>
+            <p class="mt-1 text-xs text-ink-400">{t.step2Sub}</p>
+          </div>
+
+          <!-- Panel 1: Moving Details -->
+          <div class="service-details mt-6 space-y-6" data-details-for="moving" hidden>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-copper-300">{t.moveTypeTitle}</label>
+              <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                <button type="button" class="opt-btn rounded-xl border border-ink-700 bg-ink-900 p-3.5 text-left text-xs font-medium text-ink-200 transition-all hover:border-copper-500/60" data-opt="moveType" data-val="full" aria-pressed="true">
+                  🚚 {t.moveTypes.full}
+                </button>
+                <button type="button" class="opt-btn rounded-xl border border-ink-700 bg-ink-900 p-3.5 text-left text-xs font-medium text-ink-200 transition-all hover:border-copper-500/60" data-opt="moveType" data-val="labour" aria-pressed="false">
+                  💪 {t.moveTypes.labour}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-copper-300">{t.accessTitle}</label>
+              <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                <button type="button" class="opt-btn rounded-xl border border-ink-700 bg-ink-900 p-3 text-left text-xs font-medium text-ink-200 transition-all hover:border-copper-500/60" data-opt="access" data-val="ground" aria-pressed="true">
+                  🏡 {t.accessTypes.ground}
+                </button>
+                <button type="button" class="opt-btn rounded-xl border border-ink-700 bg-ink-900 p-3 text-left text-xs font-medium text-ink-200 transition-all hover:border-copper-500/60" data-opt="access" data-val="elevator" aria-pressed="false">
+                  🏢 {t.accessTypes.elevator}
+                </button>
+                <button type="button" class="opt-btn rounded-xl border border-ink-700 bg-ink-900 p-3 text-left text-xs font-medium text-ink-200 transition-all hover:border-copper-500/60" data-opt="access" data-val="stairs" aria-pressed="false">
+                  🪜 {t.accessTypes.stairs}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-copper-300">{t.movingAddonsTitle}</label>
+              <div class="mt-3 grid gap-2.5 sm:grid-cols-3">
+                <button type="button" class="check-chip rounded-xl border border-ink-700/80 bg-ink-950 p-3 text-left text-xs text-ink-300 transition-all hover:border-copper-500/60" data-check="piano">
+                  🎹 {t.movingAddons.piano}
+                </button>
+                <button type="button" class="check-chip rounded-xl border border-ink-700/80 bg-ink-950 p-3 text-left text-xs text-ink-300 transition-all hover:border-copper-500/60" data-check="disassembly">
+                  🛏️ {t.movingAddons.disassembly}
+                </button>
+                <button type="button" class="check-chip rounded-xl border border-ink-700/80 bg-ink-950 p-3 text-left text-xs text-ink-300 transition-all hover:border-copper-500/60" data-check="packing">
+                  📦 {t.movingAddons.packing}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel 2: Cleanup & Junk Details -->
+          <div class="service-details mt-6 space-y-6" data-details-for="cleanup" hidden>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-copper-300">{t.bathroomsTitle}</label>
+              <div class="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                {t.bathOptions.map((b, i) => (
+                  <button type="button" class="opt-btn rounded-xl border border-ink-700 bg-ink-900 p-3 text-center text-xs font-medium text-ink-200 transition-all hover:border-copper-500/60" data-opt="baths" data-val={b.id} aria-pressed={i === 0 ? "true" : "false"}>
+                    🚿 {b.label}
                   </button>
                 ))}
               </div>
-            ))
-          }
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-copper-300">{t.conditionTitle}</label>
+              <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                <button type="button" class="opt-btn rounded-xl border border-ink-700 bg-ink-900 p-3 text-left text-xs font-medium text-ink-200 transition-all hover:border-copper-500/60" data-opt="condition" data-val="standard" aria-pressed="true">
+                  ✨ {t.conditionTypes.standard}
+                </button>
+                <button type="button" class="opt-btn rounded-xl border border-ink-700 bg-ink-900 p-3 text-left text-xs font-medium text-ink-200 transition-all hover:border-copper-500/60" data-opt="condition" data-val="heavy" aria-pressed="false">
+                  🏗️ {t.conditionTypes.heavy}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-copper-300">{t.cleaningAddonsTitle}</label>
+              <div class="mt-3 grid gap-2.5 sm:grid-cols-2">
+                <button type="button" class="check-chip rounded-xl border border-ink-700/80 bg-ink-950 p-3 text-left text-xs text-ink-300 transition-all hover:border-copper-500/60" data-check="oven">
+                  🍳 {t.cleaningAddons.oven}
+                </button>
+                <button type="button" class="check-chip rounded-xl border border-ink-700/80 bg-ink-950 p-3 text-left text-xs text-ink-300 transition-all hover:border-copper-500/60" data-check="fridge">
+                  🧊 {t.cleaningAddons.fridge}
+                </button>
+                <button type="button" class="check-chip rounded-xl border border-ink-700/80 bg-ink-950 p-3 text-left text-xs text-ink-300 transition-all hover:border-copper-500/60" data-check="windows">
+                  🪟 {t.cleaningAddons.windows}
+                </button>
+                <button type="button" class="check-chip rounded-xl border border-ink-700/80 bg-ink-950 p-3 text-left text-xs text-ink-300 transition-all hover:border-copper-500/60" data-check="carpet">
+                  🧴 {t.cleaningAddons.carpet}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-copper-300">{t.junkTitle}</label>
+              <div class="mt-3 grid gap-2.5 sm:grid-cols-2">
+                {t.junkOptions.map((j, i) => (
+                  <button type="button" class="opt-btn rounded-xl border border-ink-700 bg-ink-900 p-3 text-left text-xs font-medium text-ink-200 transition-all hover:border-copper-500/60" data-opt="junk" data-val={j.id} aria-pressed={i === 0 ? "true" : "false"}>
+                    📦 {j.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel 3: Snow Clearing Details -->
+          <div class="service-details mt-6 space-y-6" data-details-for="snow" hidden>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-copper-300">{t.snowTypeTitle}</label>
+              <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                <button type="button" class="opt-btn rounded-xl border border-ink-700 bg-ink-900 p-3.5 text-left text-xs font-medium text-ink-200 transition-all hover:border-copper-500/60" data-opt="snowType" data-val="seasonal" aria-pressed="true">
+                  ❄️ {t.snowTypes.seasonal}
+                </button>
+                <button type="button" class="opt-btn rounded-xl border border-ink-700 bg-ink-900 p-3.5 text-left text-xs font-medium text-ink-200 transition-all hover:border-copper-500/60" data-opt="snowType" data-val="per_visit" aria-pressed="false">
+                  🚨 {t.snowTypes.per_visit}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-copper-300">{t.snowAddonsTitle}</label>
+              <div class="mt-3 grid gap-2.5 sm:grid-cols-3">
+                <button type="button" class="check-chip rounded-xl border border-ink-700/80 bg-ink-950 p-3 text-left text-xs text-ink-300 transition-all hover:border-copper-500/60" data-check="walkway">
+                  🚶 {t.snowAddons.walkway}
+                </button>
+                <button type="button" class="check-chip rounded-xl border border-ink-700/80 bg-ink-950 p-3 text-left text-xs text-ink-300 transition-all hover:border-copper-500/60" data-check="ecoSalt">
+                  🐾 {t.snowAddons.ecoSalt}
+                </button>
+                <button type="button" class="check-chip rounded-xl border border-ink-700/80 bg-ink-950 p-3 text-left text-xs text-ink-300 transition-all hover:border-copper-500/60" data-check="iceScrape">
+                  🧊 {t.snowAddons.iceScrape}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel 4: Yard Care Details -->
+          <div class="service-details mt-6 space-y-6" data-details-for="yard" hidden>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-copper-300">{t.yardPackagesTitle}</label>
+              <div class="mt-3 grid gap-2.5 sm:grid-cols-2">
+                <button type="button" class="check-chip rounded-xl border border-ink-700/80 bg-ink-950 p-3 text-left text-xs text-ink-300 transition-all hover:border-copper-500/60" data-check="aeration">
+                  🌱 {t.yardPackages.aeration}
+                </button>
+                <button type="button" class="check-chip rounded-xl border border-ink-700/80 bg-ink-950 p-3 text-left text-xs text-ink-300 transition-all hover:border-copper-500/60" data-check="mow">
+                  ✂️ {t.yardPackages.mow}
+                </button>
+                <button type="button" class="check-chip rounded-xl border border-ink-700/80 bg-ink-950 p-3 text-left text-xs text-ink-300 transition-all hover:border-copper-500/60" data-check="leaves">
+                  🍂 {t.yardPackages.leaves}
+                </button>
+                <button type="button" class="check-chip rounded-xl border border-ink-700/80 bg-ink-950 p-3 text-left text-xs text-ink-300 transition-all hover:border-copper-500/60" data-check="hedges">
+                  🌲 {t.yardPackages.hedges}
+                </button>
+                <button type="button" class="check-chip sm:col-span-2 rounded-xl border border-ink-700/80 bg-ink-950 p-3 text-left text-xs text-ink-300 transition-all hover:border-copper-500/60" data-check="gutters">
+                  🏠 {t.yardPackages.gutters}
+                </button>
+              </div>
+            </div>
+          </div>
         </fieldset>
 
-        <!-- STEP 3: contact -->
+        <!-- ============================================================= -->
+        <!-- STEP 3: Scheduling & Contact Information                      -->
+        <!-- ============================================================= -->
         <form data-step="3" class="hidden" novalidate>
-          <p class="text-sm font-semibold uppercase tracking-wider text-ink-300">{t.contact}</p>
-          <div class="mt-5 grid gap-4 sm:grid-cols-2">
+          <div class="border-b border-ink-800 pb-4">
+            <h3 class="text-base font-bold text-ink-100">{t.step3Title}</h3>
+            <p class="mt-1 text-xs text-ink-400">{t.step3Sub}</p>
+          </div>
+
+          <div class="mt-6 grid gap-4 sm:grid-cols-2">
+            <!-- Preferred Date Picker -->
+            <label class="block">
+              <span class="mb-1.5 block text-xs font-medium text-ink-400">{t.dateLabel}</span>
+              <input type="date" name="targetDate" class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-sm text-ink-100 transition-colors focus:border-copper-500 focus:outline-none" />
+              <span class="mt-1 block text-[11px] text-ink-500">{t.dateHint}</span>
+            </label>
+
+            <!-- Urgency Selection -->
+            <label class="block">
+              <span class="mb-1.5 block text-xs font-medium text-ink-400">{t.urgencyLabel}</span>
+              <select name="urgency" class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-sm text-ink-100 transition-colors focus:border-copper-500 focus:outline-none">
+                <option value="flexible">{t.urgencyOptions.flexible}</option>
+                <option value="rush">{t.urgencyOptions.rush}</option>
+                <option value="urgent">{t.urgencyOptions.urgent}</option>
+              </select>
+            </label>
+
+            <!-- Destination postal code (Only visible if moving) -->
+            <div id="dest-postal-row" class="sm:col-span-2" hidden>
+              <label class="block">
+                <span class="mb-1.5 block text-xs font-medium text-copper-300">{t.destPostalLabel}</span>
+                <input type="text" name="destPostalCode" placeholder="e.g. L4B 3M2" maxlength="7" class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-sm text-ink-100 placeholder-ink-500 transition-colors focus:border-copper-500 focus:outline-none" />
+                <span class="mt-1 block text-[11px] text-ink-500">{t.destPostalHint}</span>
+              </label>
+            </div>
+
+            <!-- Service address / origin postal code -->
             <label class="block sm:col-span-2">
               <span class="mb-1.5 block text-xs font-medium text-ink-400">{t.postalLabel}</span>
-              <input type="text" name="postalCode" required autocomplete="postal-code" placeholder="L6A 1A1" maxlength="7" class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-ink-100 placeholder-ink-500 transition-colors focus:border-copper-500 focus:outline-none" />
+              <input type="text" name="postalCode" required autocomplete="postal-code" placeholder="L6A 1A1" maxlength="7" class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-sm text-ink-100 placeholder-ink-500 transition-colors focus:border-copper-500 focus:outline-none" />
               <span class="mt-1 block text-xs text-ink-500">{t.postalHint}</span>
             </label>
+
             <label class="block">
               <span class="mb-1.5 block text-xs font-medium text-ink-400">{t.nameLabel}</span>
-              <input type="text" name="name" required autocomplete="name" class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-ink-100 transition-colors focus:border-copper-500 focus:outline-none" />
+              <input type="text" name="name" required autocomplete="name" class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-sm text-ink-100 transition-colors focus:border-copper-500 focus:outline-none" />
             </label>
+
             <label class="block">
               <span class="mb-1.5 block text-xs font-medium text-ink-400">{t.phoneLabel}</span>
-              <input type="tel" name="phone" required autocomplete="tel" class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-ink-100 transition-colors focus:border-copper-500 focus:outline-none" />
+              <input type="tel" name="phone" required autocomplete="tel" placeholder="+1 (416) ..." class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-sm text-ink-100 transition-colors focus:border-copper-500 focus:outline-none" />
             </label>
+
             <label class="block sm:col-span-2">
               <span class="mb-1.5 block text-xs font-medium text-ink-400">{t.emailLabel}</span>
-              <input type="email" name="email" required autocomplete="email" class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-ink-100 transition-colors focus:border-copper-500 focus:outline-none" />
+              <input type="email" name="email" required autocomplete="email" class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-sm text-ink-100 transition-colors focus:border-copper-500 focus:outline-none" />
             </label>
+
             <label class="block sm:col-span-2">
               <span class="mb-1.5 block text-xs font-medium text-ink-400">{t.notesLabel}</span>
-              <textarea name="notes" rows="2" class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-ink-100 transition-colors focus:border-copper-500 focus:outline-none"></textarea>
+              <textarea name="notes" rows="2" class="w-full rounded-lg border border-ink-600 bg-ink-950 px-4 py-3 text-sm text-ink-100 transition-colors focus:border-copper-500 focus:outline-none"></textarea>
             </label>
-            <!-- Honeypot — invisible to humans, catnip for bots -->
+
+            <!-- Honeypot -->
             <label class="absolute -left-[9999px]" aria-hidden="true">
               <span>Company website</span>
               <input type="text" name="companyWebsite" tabindex="-1" autocomplete="off" />
@@ -173,7 +377,9 @@ const steps = [
           </div>
         </form>
 
-        <!-- SUCCESS -->
+        <!-- ============================================================= -->
+        <!-- SUCCESS VIEW WITH LIVE TRACKING BUTTON                        -->
+        <!-- ============================================================= -->
         <div data-step="success" class="hidden py-8 text-center">
           <span class="mx-auto grid size-16 place-items-center rounded-full bg-copper-500/15 text-copper-400">
             <svg viewBox="0 0 24 24" class="size-8" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
@@ -181,22 +387,35 @@ const steps = [
             </svg>
           </span>
           <h3 class="font-expanded mt-5 text-2xl font-bold text-ink-100">{t.successTitle}</h3>
-          <p class="mx-auto mt-3 max-w-md text-ink-300">{t.successBody}</p>
-          <button type="button" class="mt-6 rounded-full border border-ink-600 px-5 py-2.5 text-sm font-semibold text-ink-200 transition-colors hover:border-copper-500 hover:text-copper-300" data-restart>
-            {t.another}
-          </button>
+          <p class="mx-auto mt-2 max-w-md text-ink-300">{t.successBody}</p>
+
+          <div class="mt-6 inline-flex flex-col items-center gap-3">
+            <a
+              id="track-link-btn"
+              href="#"
+              target="_blank"
+              class="hidden items-center gap-2 rounded-xl bg-copper-500 px-7 py-3.5 text-sm font-bold text-ink-950 shadow-[0_8px_30px_-6px_rgba(201,123,61,0.6)] transition-all hover:bg-copper-400"
+            >
+              📍 {t.trackRequestBtn}
+            </a>
+            <p id="track-hint" class="hidden text-xs text-ink-400">{t.trackHint}</p>
+          </div>
+
+          <div class="mt-8">
+            <button type="button" class="rounded-full border border-ink-600 px-5 py-2.5 text-xs font-semibold text-ink-300 transition-colors hover:border-copper-500 hover:text-copper-300" data-restart>
+              {t.another}
+            </button>
+          </div>
         </div>
 
-        <!-- Inline error feedback (was missing — caused silent JS crash on every button click) -->
         <p class="step-error mt-4 hidden text-center text-sm font-medium text-red-400" role="alert" aria-live="polite"></p>
-
-    </div>
+      </div>
 
       <!-- Footer: live range + nav -->
       <div class="flex flex-col gap-4 border-t border-ink-700/60 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-9">
         <div data-price-banner class="text-sm text-ink-400" aria-live="polite">
           <span class="block text-xs uppercase tracking-wider text-ink-500">{t.rangeLabel}</span>
-          <span class="price-value font-expanded text-xl font-bold text-copper-300">—</span>
+          <span class="price-value font-expanded text-2xl font-bold text-copper-300">—</span>
         </div>
         <div class="flex items-center justify-end gap-3">
           <button
@@ -224,22 +443,54 @@ const steps = [
           </button>
         </div>
       </div>
-
     </div><!-- /data-estimator card -->
-
 
     <p class="mt-4 text-center text-xs text-ink-500">{t.disclaimer}</p>
   </div>
 </section>
 
 <script>
-  /* Instant Estimator island — vanilla TS, zero framework payload */
+  /* Instant Estimator island — vanilla TS with dynamic live recalculation */
   const root = document.querySelector<HTMLElement>('[data-estimator]');
   if (root) {
-    // i18n strings are embedded as data-i18n attribute by the Astro template (data attrs ARE processed)
     const a: Record<string, any> = JSON.parse(root.dataset.i18n ?? '{}');
 
-    const state = { service: '', volume: '', step: 1 as 1 | 2 | 3 };
+    const state = {
+      service: '',
+      volume: '',
+      step: 1 as 1 | 2 | 3,
+      details: {
+        moveType: 'full',
+        access: 'ground',
+        piano: false,
+        disassembly: false,
+        packing: false,
+        baths: '1',
+        condition: 'standard',
+        oven: false,
+        fridge: false,
+        windows: false,
+        carpet: false,
+        junk: 'none',
+        snowType: 'seasonal',
+        walkway: false,
+        ecoSalt: false,
+        iceScrape: false,
+        aeration: false,
+        mow: false,
+        leaves: false,
+        hedges: false,
+        gutters: false,
+      } as Record<string, any>,
+    };
+
+    const BASE_RANGES: Record<string, Record<string, [number, number]>> = {
+      moving:  { '1': [395, 480], '2': [560, 680], '3': [720, 880], '4': [950, 1350] },
+      cleanup: { '1': [280, 360], '2': [380, 480], '3': [480, 620], '4': [620, 850] },
+      snow:    { small: [450, 580], medium: [620, 780], large: [820, 1100], commercial: [1200, 2400] },
+      yard:    { small: [190, 260], medium: [280, 390], large: [420, 600], plan: [680, 1200] },
+    };
+
     const panels = {
       s1: root.querySelector<HTMLElement>('[data-step="1"]')!,
       s2: root.querySelector<HTMLElement>('[data-step="2"]')!,
@@ -252,6 +503,86 @@ const steps = [
     const priceEl = root.querySelector<HTMLElement>('.price-value')!;
     const banner = root.querySelector<HTMLElement>('[data-price-banner]')!;
     const stepError = root.querySelector<HTMLElement>('.step-error')!;
+    const volumeWrapper = root.querySelector<HTMLElement>('#volume-wrapper')!;
+    const destPostalRow = root.querySelector<HTMLElement>('#dest-postal-row')!;
+    const trackBtn = root.querySelector<HTMLAnchorElement>('#track-link-btn')!;
+    const trackHint = root.querySelector<HTMLElement>('#track-hint')!;
+
+    // Set min date on date input to today
+    const dateInput = panels.s3.querySelector<HTMLInputElement>('input[name="targetDate"]');
+    if (dateInput) {
+      dateInput.min = new Date().toISOString().split('T')[0];
+    }
+
+    function calculatePrice(): [number, number] | null {
+      if (!state.service || !state.volume) return null;
+      const base = BASE_RANGES[state.service]?.[state.volume];
+      if (!base) return null;
+
+      let low = base[0];
+      let high = base[1];
+      const d = state.details;
+
+      if (state.service === 'moving') {
+        if (d.moveType === 'labour') { low -= 120; high -= 120; }
+        if (d.access === 'elevator') { low += 60; high += 60; }
+        if (d.access === 'stairs') { low += 50; high += 50; }
+        if (d.piano) { low += 180; high += 180; }
+        if (d.disassembly) { low += 75; high += 75; }
+        if (d.packing) { low += 45; high += 45; }
+      }
+
+      if (state.service === 'cleanup') {
+        const baths = Number(d.baths || '1');
+        if (baths > 1) {
+          const extra = (baths - 1) * 60;
+          low += extra; high += extra;
+        }
+        if (d.condition === 'heavy') { low += 95; high += 95; }
+        if (d.oven) { low += 50; high += 50; }
+        if (d.fridge) { low += 45; high += 45; }
+        if (d.windows) { low += 65; high += 65; }
+        if (d.carpet) { low += 85; high += 85; }
+        if (d.junk === 'light') { low += 120; high += 120; }
+        if (d.junk === 'medium') { low += 260; high += 260; }
+        if (d.junk === 'heavy') { low += 480; high += 480; }
+      }
+
+      if (state.service === 'snow') {
+        if (d.snowType === 'per_visit') {
+          const S: Record<string, [number, number]> = {
+            small: [95, 130], medium: [130, 180], large: [190, 260], commercial: [280, 450],
+          };
+          const sBase = S[state.volume] || [120, 160];
+          low = sBase[0]; high = sBase[1];
+          if (d.walkway) { low += 35; high += 35; }
+          if (d.ecoSalt) { low += 25; high += 25; }
+        } else {
+          if (d.walkway) { low += 120; high += 120; }
+          if (d.ecoSalt) { low += 80; high += 80; }
+        }
+        if (d.iceScrape) { low += 45; high += 45; }
+      }
+
+      if (state.service === 'yard') {
+        if (d.aeration) { low += 140; high += 140; }
+        if (d.mow) { low += 180; high += 180; }
+        if (d.leaves) { low += 160; high += 160; }
+        if (d.hedges) { low += 120; high += 120; }
+        if (d.gutters) { low += 150; high += 150; }
+      }
+
+      return [Math.max(low, 80), Math.max(high, 100)];
+    }
+
+    function refreshPrice() {
+      const calc = calculatePrice();
+      if (!calc) {
+        priceEl.textContent = '—';
+      } else {
+        priceEl.textContent = `$${calc[0].toLocaleString('en-CA')} – $${calc[1].toLocaleString('en-CA')} CAD`;
+      }
+    }
 
     function paintProgress() {
       root.querySelectorAll<HTMLElement>('[data-progress]').forEach((li) => {
@@ -276,6 +607,17 @@ const steps = [
       state.step = n === 'success' ? 3 : n;
       paintProgress();
       updateNav();
+
+      // Show specific details panel on step 2
+      if (state.step === 2) {
+        root.querySelectorAll<HTMLElement>('.service-details').forEach((el) => {
+          el.hidden = el.dataset.detailsFor !== state.service;
+        });
+      }
+      // Toggle moving dest postal code on step 3
+      if (state.step === 3 && destPostalRow) {
+        destPostalRow.hidden = state.service !== 'moving';
+      }
     }
 
     function updateNav() {
@@ -283,8 +625,12 @@ const steps = [
       btnPrev.disabled = state.step === 1;
       btnNext.classList.toggle('hidden', onFinal);
       btnSubmit.classList.toggle('hidden', !onFinal);
+
       const complete =
-        (state.step === 1 && state.service) || (state.step === 2 && state.volume) || state.step === 3;
+        (state.step === 1 && state.service && state.volume) ||
+        state.step === 2 ||
+        state.step === 3;
+
       btnNext.disabled = !complete;
       btnSubmit.disabled = false;
     }
@@ -294,32 +640,81 @@ const steps = [
       stepError.classList.remove('hidden');
     }
 
-    /* Selection buttons (service + volume) */
-    root.querySelectorAll<HTMLButtonElement>('[data-select]').forEach((btn) => {
+    /* Primary service buttons */
+    root.querySelectorAll<HTMLButtonElement>('[data-select="service"]').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const kind = btn.dataset.select as 'service' | 'volume';
-        const scope = btn.closest('fieldset, form') as HTMLElement;
-        scope.querySelectorAll<HTMLButtonElement>(`[data-select="${kind}"]`).forEach((b) => {
+        root.querySelectorAll<HTMLButtonElement>('[data-select="service"]').forEach((b) => {
           b.setAttribute('aria-pressed', 'false');
           b.classList.remove('!border-copper-500', 'bg-copper-500/10');
         });
         btn.setAttribute('aria-pressed', 'true');
         btn.classList.add('!border-copper-500', 'bg-copper-500/10');
 
-        if (kind === 'service') {
-          state.service = btn.dataset.value ?? '';
-          state.volume = '';
-          root.querySelectorAll<HTMLElement>('.volume-group').forEach((g) => {
-            g.hidden = g.dataset.group !== state.service;
-          });
-          priceEl.textContent = '—';
-        } else {
-          state.volume = btn.dataset.value ?? '';
-          const chip = btn.querySelector('span:last-child')?.textContent?.trim();
-          if (chip) priceEl.textContent = chip;
-        }
+        state.service = btn.dataset.value ?? '';
+        state.volume = '';
+
+        volumeWrapper.hidden = false;
+        root.querySelectorAll<HTMLElement>('.volume-group').forEach((g) => {
+          g.hidden = g.dataset.group !== state.service;
+        });
+
+        // Reset volume button selection
+        root.querySelectorAll<HTMLButtonElement>('[data-select="volume"]').forEach((b) => {
+          b.setAttribute('aria-pressed', 'false');
+          b.classList.remove('!border-copper-500', 'bg-copper-500/10');
+        });
+
         stepError.classList.add('hidden');
+        refreshPrice();
         updateNav();
+      });
+    });
+
+    /* Primary volume buttons */
+    root.querySelectorAll<HTMLButtonElement>('[data-select="volume"]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const group = btn.closest('.volume-group') as HTMLElement;
+        group.querySelectorAll<HTMLButtonElement>('[data-select="volume"]').forEach((b) => {
+          b.setAttribute('aria-pressed', 'false');
+          b.classList.remove('!border-copper-500', 'bg-copper-500/10');
+        });
+        btn.setAttribute('aria-pressed', 'true');
+        btn.classList.add('!border-copper-500', 'bg-copper-500/10');
+
+        state.volume = btn.dataset.value ?? '';
+        stepError.classList.add('hidden');
+        refreshPrice();
+        updateNav();
+      });
+    });
+
+    /* Radio-like option buttons in Step 2 (moveType, access, baths, condition, junk, snowType) */
+    root.querySelectorAll<HTMLButtonElement>('.opt-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const optKey = btn.dataset.opt!;
+        const parent = btn.parentElement!;
+        parent.querySelectorAll<HTMLButtonElement>('.opt-btn').forEach((b) => {
+          b.setAttribute('aria-pressed', 'false');
+          b.classList.remove('!border-copper-500', 'bg-copper-500/15', 'text-copper-200');
+        });
+        btn.setAttribute('aria-pressed', 'true');
+        btn.classList.add('!border-copper-500', 'bg-copper-500/15', 'text-copper-200');
+
+        state.details[optKey] = btn.dataset.val!;
+        refreshPrice();
+      });
+    });
+
+    /* Multi-select check-chips in Step 2 */
+    root.querySelectorAll<HTMLButtonElement>('.check-chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const checkKey = btn.dataset.check!;
+        const active = btn.classList.toggle('!border-copper-500');
+        btn.classList.toggle('bg-copper-500/15', active);
+        btn.classList.toggle('text-copper-200', active);
+
+        state.details[checkKey] = active;
+        refreshPrice();
       });
     });
 
@@ -334,23 +729,32 @@ const steps = [
     }
 
     btnNext.addEventListener('click', () => {
-      if (state.step === 1 && !state.service) return showErr(a.selectService ?? 'Select a service');
-      if (state.step === 2 && !state.volume) return showErr(a.selectVolume ?? 'Select a size');
-      showStep(state.step === 1 ? 2 : 3);
+      if (state.step === 1) {
+        if (!state.service) return showErr(a.selectService ?? 'Select a service');
+        if (!state.volume) return showErr(a.selectVolume ?? 'Select a size');
+        return showStep(2);
+      }
+      if (state.step === 2) {
+        return showStep(3);
+      }
     });
 
-    btnPrev.addEventListener('click', () => showStep(state.step === 3 ? 2 : 1));
+    btnPrev.addEventListener('click', () => {
+      showStep(state.step === 3 ? 2 : 1);
+    });
 
-    /* Submit → /api/quote (Cloudflare edge function) */
+    /* Submit → /api/quote */
     btnSubmit.addEventListener('click', async () => {
       const err = validateStep3();
       if (err) return showErr(err);
+
       const form = panels.s3;
       const val = (n: string) => (form.elements.namedItem(n) as HTMLInputElement)?.value?.trim() ?? '';
       const rangeMatch = priceEl.textContent?.match(/\$([\d,]+)\s*[–-]\s*\$([\d,]+)/);
 
       btnSubmit.disabled = true;
       btnSubmit.textContent = a.submitting ?? 'Sending…';
+
       try {
         const res = await fetch('/api/quote', {
           method: 'POST',
@@ -358,6 +762,10 @@ const steps = [
           body: JSON.stringify({
             service: state.service,
             volume: state.volume,
+            details: state.details,
+            targetDate: val('targetDate'),
+            urgency: val('urgency'),
+            destPostalCode: val('destPostalCode'),
             postalCode: val('postalCode'),
             name: val('name'),
             email: val('email'),
@@ -369,9 +777,19 @@ const steps = [
             priceHigh: rangeMatch ? Number(rangeMatch[2].replace(/,/g, '')) : null,
           }),
         });
-        if (!res.ok) throw new Error('Request failed');
+
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error ?? 'Request failed');
+
+        if (data.trackUrl && trackBtn) {
+          trackBtn.href = data.trackUrl;
+          trackBtn.classList.remove('hidden');
+          trackBtn.classList.add('inline-flex');
+          if (trackHint) trackHint.classList.remove('hidden');
+        }
+
         showStep('success');
-      } catch {
+      } catch (err: any) {
         showErr(root.dataset.locale === 'zh' ? '提交失败，请致电我们。' : 'Submission failed — please call us instead.');
       } finally {
         btnSubmit.disabled = false;
@@ -384,17 +802,27 @@ const steps = [
       state.service = '';
       state.volume = '';
       panels.s3.reset();
-      root.querySelectorAll('[data-select]').forEach((b) => {
-        (b as HTMLElement).setAttribute('aria-pressed', 'false');
+
+      root.querySelectorAll<HTMLButtonElement>('[data-select]').forEach((b) => {
+        b.setAttribute('aria-pressed', 'false');
         b.classList.remove('!border-copper-500', 'bg-copper-500/10');
       });
+      root.querySelectorAll<HTMLButtonElement>('.opt-btn').forEach((b) => {
+        b.setAttribute('aria-pressed', 'false');
+        b.classList.remove('!border-copper-500', 'bg-copper-500/15', 'text-copper-200');
+      });
+      root.querySelectorAll<HTMLButtonElement>('.check-chip').forEach((b) => {
+        b.classList.remove('!border-copper-500', 'bg-copper-500/15', 'text-copper-200');
+      });
+
+      volumeWrapper.hidden = true;
       root.querySelectorAll<HTMLElement>('.volume-group').forEach((g) => (g.hidden = true));
       priceEl.textContent = '—';
+      if (trackBtn) trackBtn.classList.add('hidden');
+      if (trackHint) trackHint.classList.add('hidden');
       showStep(1);
     });
 
     showStep(1);
-
   }
 </script>
-

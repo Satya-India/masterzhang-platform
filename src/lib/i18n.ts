@@ -152,9 +152,92 @@ export const en = {
       postal: 'Use format L6A 1A1',
       outside: 'Outside York Region — we may still serve you; submit and we will confirm.',
     },
+    step2Title: 'Customize Your Service & Add-ons',
+    step2Sub: 'Tailor options for your property — pricing updates live',
+    step3Title: 'Preferred Date & Contact Details',
+    step3Sub: 'Where should our dispatch team send your locked quote and confirmation?',
+    dateLabel: 'Preferred service date',
+    dateHint: 'Select target date',
+    urgencyLabel: 'Timeline / Urgency',
+    urgencyOptions: {
+      flexible: 'Flexible (Standard scheduling)',
+      rush: 'End-of-month / Weekend rush',
+      urgent: 'Urgent (Within 24–48 hours)',
+    },
+    destPostalLabel: 'Destination postal code (Moving to)',
+    destPostalHint: 'e.g. L4B 3M2 (GTA / York Region)',
+    // Moving details
+    moveTypeTitle: 'Service format',
+    moveTypes: {
+      full: 'Full Service Move (Dedicated Truck + Professional Crew)',
+      labour: 'Labour Only (Loading / Unloading your rental truck or Pod) [-$120]',
+    },
+    accessTitle: 'Property access & building type',
+    accessTypes: {
+      ground: 'Ground level / Driveway access (+$0)',
+      elevator: 'Condo / Apartment with Elevator booking (+$60)',
+      stairs: '2–3 Storey Townhouse / Multi-flight stairs (+$50)',
+    },
+    movingAddonsTitle: 'Specialty items & protection (optional)',
+    movingAddons: {
+      piano: 'Upright Piano / Heavy Safe / Gym Rig (+$180)',
+      disassembly: 'Bed & Furniture Disassembly / Reassembly (+$75)',
+      packing: 'Mattress Bag & Wardrobe Box Protection (+$45)',
+    },
+    // Cleanup details
+    bathroomsTitle: 'Number of bathrooms',
+    bathOptions: [
+      { id: '1', label: '1 Bathroom (+$0)' },
+      { id: '2', label: '2 Bathrooms (+$60)' },
+      { id: '3', label: '3 Bathrooms (+$120)' },
+      { id: '4', label: '4+ Bathrooms (+$180)' },
+    ],
+    conditionTitle: 'Clean intensity & condition',
+    conditionTypes: {
+      standard: 'Standard Turnover Inspection Clean (+$0)',
+      heavy: 'Post-Renovation Drywall Dust / Deep Grime (+$95)',
+    },
+    cleaningAddonsTitle: 'Kitchen & glass deep-clean add-ons (optional)',
+    cleaningAddons: {
+      oven: 'Inside Oven Deep Degrease & Scrub (+$50)',
+      fridge: 'Inside Refrigerator Deep Sterilize (+$45)',
+      windows: 'Interior Window Glass & Sills (+$65)',
+      carpet: 'Carpet Steam Extraction Shampoo (+$85)',
+    },
+    junkTitle: 'Junk haul-away volume',
+    junkOptions: [
+      { id: 'none', label: 'No junk removal — cleaning only (+$0)' },
+      { id: 'light', label: 'Light (1–2 items: mattress / sofa) (+$120)' },
+      { id: 'medium', label: 'Half trailer / Single room clear-out (+$260)' },
+      { id: 'heavy', label: 'Full estate / Garage clear-out (+$480)' },
+    ],
+    // Snow details
+    snowTypeTitle: 'Coverage type',
+    snowTypes: {
+      seasonal: 'Unlimited Season Pass (Nov 15 – Apr 1, >5cm trigger)',
+      per_visit: 'Single Storm Emergency Clearing',
+    },
+    snowAddonsTitle: 'Canadian winter safety add-ons (optional)',
+    snowAddons: {
+      walkway: 'Hand-shovel front walkway, porch & steps (+$120 season / +$35 visit)',
+      ecoSalt: 'Pet-friendly & concrete-safe eco calcium chloride (+$80 season / +$25 visit)',
+      iceScrape: 'Heavy ice scrape & hard-pack ice breaker (+$45)',
+    },
+    // Yard details
+    yardPackagesTitle: 'Trending Ontario seasonal services (select all that apply)',
+    yardPackages: {
+      aeration: 'Spring Dethatching, Power Rake & Core Aeration (+$140)',
+      mow: 'Bi-Weekly Lawn Mowing & Edging Plan (May–Oct) (+$45/visit)',
+      leaves: 'Fall Leaf Cleanup & Curbside Bagging (+$160)',
+      hedges: 'Cedar Hedge & Shrub Trimming (+$120)',
+      gutters: 'Eavestrough / Gutter Debris Flush (+$150)',
+    },
+    trackRequestBtn: 'Track Your Request Live →',
+    trackHint: 'You can check dispatch status and track your crew in real-time.',
     selectService: 'Select a service to continue',
     selectVolume: 'Select a size to continue',
   },
+
   gallery: {
     eyebrow: 'Proof of work',
     title: 'Before / After',
