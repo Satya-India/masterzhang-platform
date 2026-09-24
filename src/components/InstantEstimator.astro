@@ -59,6 +59,14 @@ const steps = [
       class="edge-glow mt-12 rounded-3xl border border-ink-700/60 bg-gradient-to-b from-ink-850 to-ink-900"
       data-estimator
       data-locale={locale}
+      data-i18n={JSON.stringify({
+        selectService: t.selectService,
+        selectVolume: t.selectVolume,
+        submitting: t.submitting,
+        submit: t.submit,
+        another: t.another,
+        errors: t.errors,
+      })}
     >
       <!-- Progress -->
       <ol class="flex items-center gap-2 border-b border-ink-700/60 px-6 py-5 sm:px-9" aria-label="Progress">
@@ -179,20 +187,10 @@ const steps = [
           </button>
         </div>
 
-        <!-- Inline error feedback — was missing in original, causing silent JS crash -->
+        <!-- Inline error feedback (was missing — caused silent JS crash on every button click) -->
         <p class="step-error mt-4 hidden text-center text-sm font-medium text-red-400" role="alert" aria-live="polite"></p>
 
     </div>
-
-    <!-- Client-side i18n strings — avoids JS crash when accessing t.submitting / t.errors -->
-    <script type="application/json" id="estimator-i18n">{JSON.stringify({ t: {
-      selectService: t.selectService,
-      selectVolume: t.selectVolume,
-      submitting: t.submitting,
-      submit: t.submit,
-      another: t.another,
-      errors: t.errors,
-    } })}</script>
 
       <!-- Footer: live range + nav -->
       <div class="flex flex-col gap-4 border-t border-ink-700/60 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-9">
@@ -238,9 +236,8 @@ const steps = [
   /* Instant Estimator island — vanilla TS, zero framework payload */
   const root = document.querySelector<HTMLElement>('[data-estimator]');
   if (root) {
-    const i18nEl = document.getElementById('estimator-i18n');
-    const i18n = i18nEl ? (JSON.parse(i18nEl.textContent ?? '{}') as { t: any }) : { t: null };
-    const t = i18n.t;
+    // i18n strings are embedded as data-i18n attribute by the Astro template (data attrs ARE processed)
+    const a: Record<string, any> = JSON.parse(root.dataset.i18n ?? '{}');
 
     const state = { service: '', volume: '', step: 1 as 1 | 2 | 3 };
     const panels = {
@@ -329,16 +326,16 @@ const steps = [
     function validateStep3(): string | null {
       const form = panels.s3;
       const get = (n: string) => (form.elements.namedItem(n) as HTMLInputElement)?.value?.trim() ?? '';
-      if (get('postalCode').length < 6) return t.errors.postal;
-      if (!get('name')) return t.errors.required;
-      if (!/^[+()\-.\s\d]{7,20}$/.test(get('phone'))) return t.errors.phone;
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(get('email'))) return t.errors.email;
+      if (get('postalCode').length < 6) return a.errors?.postal ?? 'Use format L6A 1A1';
+      if (!get('name')) return a.errors?.required ?? 'Required';
+      if (!/^[+()\-.\s\d]{7,20}$/.test(get('phone'))) return a.errors?.phone ?? 'Invalid phone';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(get('email'))) return a.errors?.email ?? 'Invalid email';
       return null;
     }
 
     btnNext.addEventListener('click', () => {
-      if (state.step === 1 && !state.service) return showErr(t.selectService);
-      if (state.step === 2 && !state.volume) return showErr(t.selectVolume);
+      if (state.step === 1 && !state.service) return showErr(a.selectService ?? 'Select a service');
+      if (state.step === 2 && !state.volume) return showErr(a.selectVolume ?? 'Select a size');
       showStep(state.step === 1 ? 2 : 3);
     });
 
@@ -353,7 +350,7 @@ const steps = [
       const rangeMatch = priceEl.textContent?.match(/\$([\d,]+)\s*[–-]\s*\$([\d,]+)/);
 
       btnSubmit.disabled = true;
-      btnSubmit.textContent = t.submitting;
+      btnSubmit.textContent = a.submitting ?? 'Sending…';
       try {
         const res = await fetch('/api/quote', {
           method: 'POST',
@@ -378,7 +375,7 @@ const steps = [
         showErr(root.dataset.locale === 'zh' ? '提交失败，请致电我们。' : 'Submission failed — please call us instead.');
       } finally {
         btnSubmit.disabled = false;
-        btnSubmit.textContent = t.submit;
+        btnSubmit.textContent = a.submit ?? 'Request firm quote';
       }
     });
 
