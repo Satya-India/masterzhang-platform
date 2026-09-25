@@ -65,7 +65,7 @@ const statsList = [
         <div class="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
           <a
             href={`${base}/#estimator`}
-            class="group inline-flex items-center justify-center gap-2 rounded-xl bg-copper-500 px-7 py-4 text-base font-bold text-ink-950 shadow-[0_8px_30px_-6px_rgba(201,123,61,0.6)] transition-all hover:-translate-y-0.5 hover:bg-copper-400"
+            class="group inline-flex items-center justify-center gap-2 rounded-xl bg-copper-500 px-7 py-4 text-base font-bold text-slate-950 shadow-[0_8px_30px_-6px_rgba(201,123,61,0.6)] transition-all hover:-translate-y-0.5 hover:bg-copper-400"
           >
             {t.hero.ctaPrimary}
             <svg viewBox="0 0 24 24" class="size-5 transition-transform group-hover:translate-y-0.5" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
@@ -137,7 +137,7 @@ const statsList = [
           <div class="mt-5 grid grid-cols-4 gap-1.5 rounded-xl bg-ink-950 p-1 border border-ink-800">
             <button
               type="button"
-              class="qc-tab active relative rounded-lg py-2.5 text-center text-xs font-bold transition-all duration-200 text-ink-950 bg-copper-500 shadow-sm"
+              class="qc-tab active relative rounded-lg py-2.5 text-center text-xs font-bold transition-all duration-200 text-slate-950 bg-copper-500 shadow-sm"
               data-tab="moving"
             >
               🚛 {qc.tabs.moving}
@@ -237,7 +237,7 @@ const statsList = [
             <button
               type="button"
               id="qc-action-btn"
-              class="w-full rounded-xl bg-copper-500 py-3.5 text-center text-sm font-bold text-ink-950 shadow-[0_4px_20px_rgba(201,123,61,0.4)] transition-all hover:bg-copper-400 hover:shadow-[0_6px_25px_rgba(201,123,61,0.6)]"
+              class="w-full rounded-xl bg-copper-500 py-3.5 text-center text-sm font-bold text-slate-950 shadow-[0_4px_20px_rgba(201,123,61,0.4)] transition-all hover:bg-copper-400 hover:shadow-[0_6px_25px_rgba(201,123,61,0.6)]"
             >
               {qc.actionBtn}
             </button>
@@ -296,7 +296,7 @@ const statsList = [
         const isActive = i === index;
         tab.classList.toggle('active', isActive);
         tab.classList.toggle('bg-copper-500', isActive);
-        tab.classList.toggle('text-ink-950', isActive);
+        tab.classList.toggle('text-slate-950', isActive);
         tab.classList.toggle('shadow-sm', isActive);
         tab.classList.toggle('text-ink-400', !isActive);
       });

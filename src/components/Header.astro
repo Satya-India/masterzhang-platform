@@ -45,12 +45,26 @@ const toggleHref = (target: Locale) => (target === 'zh' ? `/zh${basePath === '/'
       <a class="transition-colors hover:text-copper-300" href={(locale === 'zh' ? '/zh' : '') + '/#reviews'}>{t.nav.reviews}</a>
       <a class="rounded-full border border-ink-600 px-4 py-1.5 transition-colors hover:border-copper-500 hover:text-copper-300" href={(locale === 'zh' ? '/zh' : '') + '/#estimator'}>{t.nav.estimate}</a>
       <a
-        class="rounded-full bg-copper-500 px-4 py-1.5 font-semibold text-ink-950 transition-colors hover:bg-copper-400"
+        class="rounded-full bg-copper-500 px-4 py-1.5 font-bold text-slate-950 transition-colors hover:bg-copper-400"
         href={`mailto:${SITE.rfpEmail}?subject=${encodeURIComponent('Commercial RFP / Vendor Account')}`}
       >{t.nav.commercial}</a>
     </nav>
 
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2.5 sm:gap-3">
+      <!-- Day / Night Mode Switcher -->
+      <button
+        type="button"
+        id="theme-toggle-btn"
+        class="flex items-center gap-1.5 rounded-full border border-ink-600/80 bg-ink-900/80 px-2.5 py-1.5 text-xs font-semibold text-ink-300 transition-all hover:border-copper-500 hover:text-copper-300 focus:outline-none"
+        aria-label="Toggle Daytime / Nighttime theme"
+        title={locale === 'zh' ? '切换白天 / 夜间模式 (系统会根据当前时间自动切换)' : 'Toggle Day / Night mode (auto-syncs with sunrise/sunset)'}
+      >
+        <span id="theme-toggle-icon" class="text-xs sm:text-sm">☀️</span>
+        <span id="theme-toggle-label" class="hidden sm:inline text-[11px] font-medium text-ink-300">
+          {locale === 'zh' ? '日间' : 'Day'}
+        </span>
+      </button>
+
       <!-- Language toggle -->
       <nav class="flex overflow-hidden rounded-full border border-ink-600 text-xs font-semibold" aria-label="Language">
         {LOCALES.map((l) => (
@@ -60,13 +74,14 @@ const toggleHref = (target: Locale) => (target === 'zh' ? `/zh${basePath === '/'
             aria-current={l.code === locale ? 'true' : undefined}
             class:list={[
               'px-3 py-1.5 transition-colors',
-              l.code === locale ? 'bg-copper-500 text-ink-950' : 'text-ink-300 hover:bg-ink-800',
+              l.code === locale ? 'bg-copper-500 text-slate-950 font-bold' : 'text-ink-300 hover:bg-ink-800',
             ]}
           >
             {l.label}
           </a>
         ))}
       </nav>
+
       <a
         href={`tel:${SITE.phoneHref}`}
         class="hidden items-center gap-2 rounded-full border border-copper-500/50 px-4 py-1.5 text-sm font-semibold text-copper-300 transition-colors hover:bg-copper-500/10 sm:flex"
@@ -79,3 +94,61 @@ const toggleHref = (target: Locale) => (target === 'zh' ? `/zh${basePath === '/'
     </div>
   </div>
 </header>
+
+<script>
+  (function () {
+    const btn = document.getElementById('theme-toggle-btn');
+    const icon = document.getElementById('theme-toggle-icon');
+    const label = document.getElementById('theme-toggle-label');
+    const isZh = document.documentElement.lang?.startsWith('zh');
+
+    function updateUI(isLight: boolean) {
+      if (icon) {
+        icon.textContent = isLight ? '☀️' : '🌙';
+      }
+      if (label) {
+        label.textContent = isLight 
+          ? (isZh ? '日间' : 'Day') 
+          : (isZh ? '夜间' : 'Night');
+      }
+      if (btn) {
+        btn.setAttribute('aria-label', isLight 
+          ? (isZh ? '当前为白天模式，点击切换为夜间模式' : 'Currently in Daytime mode, click for Night mode')
+          : (isZh ? '当前为夜间模式，点击切换为白天模式' : 'Currently in Night mode, click for Day mode')
+        );
+      }
+    }
+
+    // Initialize state
+    const currentIsLight = document.documentElement.classList.contains('light');
+    updateUI(currentIsLight);
+
+    if (btn) {
+      btn.addEventListener('click', () => {
+        const isNowLight = document.documentElement.classList.contains('light');
+        const nextIsLight = !isNowLight;
+
+        if (nextIsLight) {
+          document.documentElement.classList.add('light');
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem('nexus_theme', 'light');
+        } else {
+          document.documentElement.classList.remove('light');
+          document.documentElement.classList.add('dark');
+          localStorage.setItem('nexus_theme', 'dark');
+        }
+
+        updateUI(nextIsLight);
+        window.dispatchEvent(new CustomEvent('nexus:themechange', { detail: { theme: nextIsLight ? 'light' : 'dark' } }));
+      });
+    }
+
+    // Sync across browser tabs or external events
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'nexus_theme') {
+        const isL = e.newValue === 'light';
+        updateUI(isL);
+      }
+    });
+  })();
+</script>

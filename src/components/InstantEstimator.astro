@@ -394,7 +394,7 @@ const steps = [
               id="track-link-btn"
               href="#"
               target="_blank"
-              class="hidden items-center gap-2 rounded-xl bg-copper-500 px-7 py-3.5 text-sm font-bold text-ink-950 shadow-[0_8px_30px_-6px_rgba(201,123,61,0.6)] transition-all hover:bg-copper-400"
+              class="hidden items-center gap-2 rounded-xl bg-copper-500 px-7 py-3.5 text-sm font-bold text-slate-950 shadow-[0_8px_30px_-6px_rgba(201,123,61,0.6)] transition-all hover:bg-copper-400"
             >
               📍 {t.trackRequestBtn}
             </a>
@@ -428,7 +428,7 @@ const steps = [
           </button>
           <button
             type="button"
-            class="rounded-xl bg-copper-500 px-6 py-2.5 text-sm font-bold text-ink-950 transition-colors hover:bg-copper-400 disabled:opacity-40"
+            class="rounded-xl bg-copper-500 px-6 py-2.5 text-sm font-bold text-slate-950 transition-colors hover:bg-copper-400 disabled:opacity-40"
             data-next
             disabled
           >
@@ -436,7 +436,7 @@ const steps = [
           </button>
           <button
             type="button"
-            class="hidden rounded-xl bg-copper-500 px-6 py-2.5 text-sm font-bold text-ink-950 transition-colors hover:bg-copper-400 disabled:opacity-50"
+            class="hidden rounded-xl bg-copper-500 px-6 py-2.5 text-sm font-bold text-slate-950 transition-colors hover:bg-copper-400 disabled:opacity-50"
             data-submit
           >
             {t.submit}
@@ -589,7 +589,7 @@ const steps = [
         const n = Number(li.dataset.progress);
         const dot = li.querySelector('.progress-dot') as HTMLElement;
         dot.classList.toggle('bg-copper-500', n <= state.step);
-        dot.classList.toggle('text-ink-950', n <= state.step);
+        dot.classList.toggle('text-slate-950', n <= state.step);
         dot.classList.toggle('border-copper-500', n <= state.step);
         li.querySelector('.progress-line')?.classList.toggle('bg-copper-600', n < state.step);
       });

@@ -34,11 +34,39 @@ const otherHref = locale === 'zh' ? (path.replace('/zh', '') || '/') : `/zh${pat
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <SEO {title} {description} {path} {locale} {ogImage} {extraSchema} {noindex} />
+
+    <!-- Day / Night Automatic Theme Controller (Prevents FOUC) -->
+    <script is:inline>
+      (function () {
+        try {
+          var stored = localStorage.getItem('nexus_theme');
+          var isLight = false;
+          if (stored === 'light') {
+            isLight = true;
+          } else if (stored === 'dark') {
+            isLight = false;
+          } else {
+            // Auto: Daytime between 7:00 AM (07:00) and 7:00 PM (19:00) -> Light mode
+            // Nighttime between 7:00 PM (19:00) and 7:00 AM (07:00) -> Dark mode
+            var hr = new Date().getHours();
+            isLight = hr >= 7 && hr < 19;
+          }
+          var root = document.documentElement;
+          if (isLight) {
+            root.classList.add('light');
+            root.classList.remove('dark');
+          } else {
+            root.classList.add('dark');
+            root.classList.remove('light');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body class="min-h-screen bg-ink-950 font-sans text-ink-100 antialiased">
     <a
       href="#main"
-      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-copper-500 focus:px-4 focus:py-2 focus:text-ink-950"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-copper-500 focus:px-4 focus:py-2 focus:text-slate-950 font-bold"
     >
       {locale === 'zh' ? '跳到主要内容' : 'Skip to content'}
     </a>
